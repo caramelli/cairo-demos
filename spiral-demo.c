@@ -10,8 +10,6 @@
 #include <gdk-pixbuf/gdk-pixbuf.h>
 #include "demo.h"
 
-#define SHOW_PATH 1
-
 struct source{
 	cairo_surface_t *surface;
 	int width, height;
@@ -178,6 +176,7 @@ int main(int argc, char **argv)
 	float sincos_lut[360];
 	struct timeval start, last, now;
 	int theta, frames, n;
+	int show_path = 1;
 
 	device = device_open(argc, argv);
 
@@ -185,6 +184,8 @@ int main(int argc, char **argv)
 	    if (strcmp (argv[n], "--images") == 0) {
 		path = argv[n+1];
 		n++;
+	    } else if (strcmp (argv[n], "--hide-path") == 0) {
+		show_path = 0;
 	    }
 	}
 
@@ -224,7 +225,7 @@ int main(int argc, char **argv)
 		cairo_push_group_with_content(cr, CAIRO_CONTENT_COLOR);
 #endif
 
-		if (SHOW_PATH) {
+		if (show_path) {
 			cairo_set_source_rgb(cr, 1, 1, 1);
 			cairo_set_line_width(cr, 5);
 			cairo_set_line_cap(cr, CAIRO_LINE_CAP_ROUND);

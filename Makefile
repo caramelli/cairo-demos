@@ -29,7 +29,12 @@ else
 DEFINES+=-DHAVE_GLX=0
 endif
 
-all: spiral-demo poppler-demo
+all: spiral-demo
+
+ifeq ($(shell pkg-config --exists poppler-glib && echo 1), 1)
+all: poppler-demo
+REQUIRES+=poppler-glib
+endif
 
 CFLAGS:=$(shell pkg-config --cflags $(REQUIRES)) -Wall -g3
 LIBS:=$(shell pkg-config --libs $(REQUIRES))
@@ -37,7 +42,7 @@ LIBS:=$(shell pkg-config --libs $(REQUIRES))
 spiral-demo: spiral-demo.c $(SOURCES) demo.h Makefile
 	$(CC) $(DEFINES) $(CFLAGS) -o $@ spiral-demo.c $(SOURCES) $(LIBS)
 poppler-demo: poppler-demo.c $(SOURCES) demo.h Makefile
-	$(CC) $(DEFINES) $(CFLAGS) $(shell pkg-config --cflags poppler-glib) -o $@ poppler-demo.c $(SOURCES) $(LIBS) $(shell pkg-config --libs poppler-glib)
+	$(CC) $(DEFINES) $(CFLAGS) -o $@ poppler-demo.c $(SOURCES) $(LIBS)
 clean:
 	rm -f *-demo
 
