@@ -1,6 +1,6 @@
-SOURCES:=xlib.c ximage.c
+SOURCES:=demo.c xlib.c ximage.c
 REQUIRES:=cairo-xlib xext gdk-pixbuf-2.0
-DEFINES:=-DHAVE_XLIB=1 -DHAVE_XIMAGE=1 -DHAVE_GLX=1
+DEFINES:=-DHAVE_XLIB=1 -DHAVE_XIMAGE=1
 
 DRM:=0
 ifneq ($(DRM),0)
@@ -11,7 +11,7 @@ else
 DEFINES+=-DHAVE_DRM=0
 endif
 
-XCB:=1
+XCB:=$(shell pkg-config --exists cairo-xcb && echo 1 || echo 0)
 ifneq ($(XCB),0)
 DEFINES+=-DHAVE_XCB=1
 SOURCES+=xcb.c
@@ -20,7 +20,7 @@ else
 DEFINES+=-DHAVE_XCB=0
 endif
 
-GLX:=1
+GLX:=$(shell pkg-config --exists cairo-gl && echo 1 || echo 0)
 ifneq ($(GLX),0)
 DEFINES+=-DHAVE_GLX=1
 SOURCES+=glx.c

@@ -25,9 +25,34 @@ struct slide {
     void (*draw) (struct slide *, cairo_t *, int, int);
 };
 
+struct device *device_open(int argc, char **argv);
 
-struct device *xcb_open (int argc, char **argv);
-struct device *xlib_open (int argc, char **argv);
-struct device *ximage_open (int argc, char **argv);
+#if HAVE_GLX
 struct device *glx_open (int argc, char **argv);
+#else
+static inline struct device *glx_open (int argc, char **argv) { return 0; }
+#endif
+
+#if HAVE_XCB
+struct device *xcb_open (int argc, char **argv);
+#else
+static inline struct device *xcb_open (int argc, char **argv) { return 0; }
+#endif
+
+#if HAVE_XLIB
+struct device *xlib_open (int argc, char **argv);
+#else
+static inline struct device *xlib_open (int argc, char **argv) { return 0; }
+#endif
+
+#if HAVE_XIMAGE
+struct device *ximage_open (int argc, char **argv);
+#else
+static inline struct device *ximage_open (int argc, char **argv) { return 0; }
+#endif
+
+#if HAVE_DRM
 struct device *drm_open (int argc, char **argv);
+#else
+static inline struct device *drm_open (int argc, char **argv) { return 0; }
+#endif

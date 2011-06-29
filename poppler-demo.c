@@ -43,43 +43,27 @@ main (int argc, char **argv)
 {
     struct device *device;
     struct timeval last, now;
-    enum {
-	AUTO,
-	XLIB,
-	XIMAGE,
-	XCB,
-	GLX,
-	DRM,
-    } backend = AUTO;
     const char *filename = NULL;
     PopplerDocument *document;
     gchar *absolute, *uri;
     GError *error = NULL;
     int n, num_pages;
 
-    g_type_init ();
+    device = device_open(argc, argv);
 
     for (n = 1; n < argc; n++) {
-	if (strcmp (argv[n], "--xlib") == 0) {
-	    backend = XLIB;
-	} else if (strcmp (argv[n], "--xcb") == 0) {
-	    backend = XCB;
-	} else if (strcmp (argv[n], "--ximage") == 0) {
-	    backend = XIMAGE;
-	} else if (strcmp (argv[n], "--glx") == 0) {
-	    backend = GLX;
-	} else if (strcmp (argv[n], "--drm") == 0) {
-	    backend = DRM;
-	} else if (strcmp (argv[n], "--filename") == 0) {
+	if (strcmp (argv[n], "--filename") == 0) {
 	    filename = argv[n+1];
 	    n++;
 	}
     }
-
     if (filename == NULL) {
 	fprintf (stderr, "Please use --filename <filename> to specify the PDF file to render\n");
 	return 1;
     }
+
+
+    g_type_init ();
 
     if (g_path_is_absolute (filename)) {
 	absolute = g_strdup (filename);
@@ -100,59 +84,6 @@ main (int argc, char **argv)
 	return 1;
 
     num_pages = poppler_document_get_n_pages (document);
-
-    if (backend == AUTO) {
-	device = NULL;
-	if (device == NULL && HAVE_DRM) {
-	    device = drm_open (argc, argv);
-	}
-	if (device == NULL && HAVE_XCB)
-	    device = xcb_open (argc, argv);
-	if (device == NULL && HAVE_XLIB)
-	    device = xlib_open (argc, argv);
-	if (device == NULL && HAVE_XIMAGE)
-	    device = ximage_open (argc, argv);
-	if (device == NULL && HAVE_GLX)
-	    device = glx_open (argc, argv);
-	if (device == NULL) {
-	    fprintf (stderr, "Failed to open output device.\n");
-	    return 1;
-	}
-    } else {
-	switch (backend) {
-	case AUTO:
-	case XLIB:
-#if HAVE_XLIB
-	    device = xlib_open (argc, argv);
-#endif
-	    break;
-	case XCB:
-#if HAVE_XCB
-	    device = xcb_open (argc, argv);
-#endif
-	    break;
-	case XIMAGE:
-#if HAVE_XIMAGE
-	    device = ximage_open (argc, argv);
-#endif
-	    break;
-	case DRM:
-#if HAVE_DRM
-	    device = drm_open (argc, argv);
-#endif
-	    break;
-	case GLX:
-#if HAVE_GLX
-	    device = glx_open (argc, argv);
-#endif
-	    break;
-	}
-
-	if (device == NULL) {
-	    fprintf (stderr, "Failed to open backend device\n");
-	    return 1;
-	}
-    }
 
     n = 0;
     gettimeofday (&last, NULL);

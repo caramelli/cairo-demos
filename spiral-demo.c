@@ -174,89 +174,19 @@ static void load_sources(const char *path, cairo_surface_t *target)
 int main(int argc, char **argv)
 {
 	struct device *device;
-	enum {
-		AUTO,
-		XLIB,
-		XIMAGE,
-		XCB,
-		GLX,
-		DRM,
-	} backend = AUTO;
 	const char *path = "/usr/share/backgrounds";
 	float sincos_lut[360];
 	struct timeval start, last, now;
 	int theta, frames, n;
 
+	device = device_open(argc, argv);
+
 	for (n = 1; n < argc; n++) {
-		if (strcmp (argv[n], "--xlib") == 0) {
-			backend = XLIB;
-		} else if (strcmp (argv[n], "--xcb") == 0) {
-			backend = XCB;
-		} else if (strcmp (argv[n], "--ximage") == 0) {
-			backend = XIMAGE;
-		} else if (strcmp (argv[n], "--drm") == 0) {
-			backend = DRM;
-		} else if (strcmp (argv[n], "--glx") == 0) {
-			backend = GLX;
-		} else if (strcmp (argv[n], "--images") == 0) {
-			path = argv[n+1];
-			n++;
-		}
+	    if (strcmp (argv[n], "--images") == 0) {
+		path = argv[n+1];
+		n++;
+	    }
 	}
-
-	if (backend == AUTO) {
-		device = NULL;
-		if (device == NULL && HAVE_DRM) {
-			device = drm_open (argc, argv);
-		}
-		if (device == NULL && HAVE_XCB)
-			device = xcb_open (argc, argv);
-		if (device == NULL && HAVE_XLIB)
-			device = xlib_open (argc, argv);
-		if (device == NULL && HAVE_XLIB)
-			device = glx_open (argc, argv);
-		if (device == NULL && HAVE_XIMAGE)
-			device = ximage_open (argc, argv);
-		if (device == NULL) {
-			fprintf (stderr, "Failed to open output device.\n");
-			return 1;
-		}
-	} else {
-		switch (backend) {
-		case AUTO:
-		case XLIB:
-#if HAVE_XLIB
-			device = xlib_open (argc, argv);
-#endif
-			break;
-		case XCB:
-#if HAVE_XCB
-			device = xcb_open (argc, argv);
-#endif
-			break;
-		case XIMAGE:
-#if HAVE_XIMAGE
-			device = ximage_open (argc, argv);
-#endif
-			break;
-		case GLX:
-#if HAVE_GLX
-			device = glx_open (argc, argv);
-#endif
-			break;
-		case DRM:
-#if HAVE_DRM
-			device = drm_open (argc, argv);
-#endif
-			break;
-		}
-
-		if (device == NULL) {
-			fprintf (stderr, "Failed to open backend device\n");
-			return 1;
-		}
-	}
-	printf("Using backend \"%s\"\n", device->name);
 
 	g_type_init();
 
