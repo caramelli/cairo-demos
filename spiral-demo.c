@@ -10,11 +10,49 @@
 #include <gdk-pixbuf/gdk-pixbuf.h>
 #include "demo.h"
 
-struct source{
+static struct source{
 	cairo_surface_t *surface;
 	int width, height;
 } *sources;
-int num_sources;
+static int num_sources;
+
+static void
+fps_draw (cairo_t *cr, const char *name,
+	  const struct timeval *last,
+	  const struct timeval *now)
+{
+#define N_FILTER 25
+    static double filter[25];
+    static int filter_pos;
+    cairo_text_extents_t extents;
+    char buf[80];
+    double fps, avg;
+    int n, max;
+
+    fps = now->tv_sec - last->tv_sec;
+    fps += (now->tv_usec - last->tv_usec) / 1000000.;
+
+    max = N_FILTER;
+    avg = fps;
+    if (filter_pos < max)
+	max = filter_pos;
+    for (n = 0; n < max; n++)
+	avg += filter[n];
+    avg /= max + 1;
+    filter[filter_pos++ % N_FILTER] = fps;
+
+    snprintf (buf, sizeof (buf), "%s: %.1f fps", name, 1. / avg);
+    cairo_set_font_size (cr, 18);
+    cairo_text_extents (cr, buf, &extents);
+
+    cairo_rectangle (cr, 4-1, 4-1, extents.width+2, extents.height+2);
+    cairo_set_source_rgba (cr, .0, .0, .0, .85);
+    cairo_fill (cr);
+
+    cairo_move_to (cr, 4 - extents.x_bearing, 4 - extents.y_bearing);
+    cairo_set_source_rgb (cr, .95, .95, .95);
+    cairo_show_text (cr, buf);
+}
 
 static cairo_surface_t *
 _cairo_image_surface_create_from_pixbuf(const GdkPixbuf *pixbuf)
@@ -36,6 +74,9 @@ _cairo_image_surface_create_from_pixbuf(const GdkPixbuf *pixbuf)
 		format = CAIRO_FORMAT_ARGB32;
 
 	surface = cairo_image_surface_create(format, width, height);
+	if (cairo_surface_status(surface))
+		return surface;
+
 	cairo_stride = cairo_image_surface_get_stride (surface);
 	cairo_pixels = cairo_image_surface_get_data(surface);
 
@@ -133,7 +174,8 @@ static void load_sources(const char *path, cairo_surface_t *target)
 		image = _cairo_image_surface_create_from_pixbuf(pb);
 		g_object_unref(pb);
 
-		surface = cairo_surface_create_similar(target, CAIRO_CONTENT_COLOR_ALPHA,
+		surface = cairo_surface_create_similar(target,
+						       cairo_surface_get_content(image),
 						       cairo_image_surface_get_width(image),
 						       cairo_image_surface_get_height(image));
 
@@ -174,9 +216,11 @@ int main(int argc, char **argv)
 	struct device *device;
 	const char *path = "/usr/share/backgrounds";
 	float sincos_lut[360];
-	struct timeval start, last, now;
+	struct timeval start, last_tty, last_fps, now;
 	int theta, frames, n;
 	int show_path = 1;
+	int show_outline = 1;
+	int show_fps = 1;
 
 	device = device_open(argc, argv);
 
@@ -186,6 +230,10 @@ int main(int argc, char **argv)
 		n++;
 	    } else if (strcmp (argv[n], "--hide-path") == 0) {
 		show_path = 0;
+	    } else if (strcmp (argv[n], "--hide-outline") == 0) {
+		show_outline = 0;
+	    } else if (strcmp (argv[n], "--hide-fps") == 0) {
+		show_fps = 0;
 	    }
 	}
 
@@ -198,7 +246,7 @@ int main(int argc, char **argv)
 
 	load_sources(path, device->get_framebuffer(device)->surface);
 
-	gettimeofday(&start, 0); now = last = start;
+	gettimeofday(&start, 0); now = last_tty = last_fps = start;
 	frames = 0;
 	do {
 		struct framebuffer *fb;
@@ -217,14 +265,10 @@ int main(int argc, char **argv)
 
 		rotation = floor(50*delta);
 
-#if SINGLE_BUFFERED
 		cairo_set_operator(cr, CAIRO_OPERATOR_CLEAR);
 		cairo_paint(cr);
-		cairo_set_operator(cr, CAIRO_OPERATOR_OVER);
-#else
-		cairo_push_group_with_content(cr, CAIRO_CONTENT_COLOR);
-#endif
 
+		cairo_set_operator(cr, CAIRO_OPERATOR_OVER);
 		if (show_path) {
 			cairo_set_source_rgb(cr, 1, 1, 1);
 			cairo_set_line_width(cr, 5);
@@ -264,28 +308,40 @@ int main(int argc, char **argv)
 				cairo_pattern_set_filter(cairo_get_source(cr), CAIRO_FILTER_BILINEAR);
 				cairo_identity_matrix(cr);
 				cairo_paint(cr);
+
+				if (show_outline) {
+					cairo_set_source_rgb(cr, 1, 1, 1);
+					cairo_set_line_width(cr, 2);
+
+					cairo_translate(cr, width/2+dx, height/2+dy);
+					cairo_rotate(cr, M_PI/2+spin+(rotation+theta)/180.*M_PI);
+					cairo_rectangle(cr, -w/2, -h/2, w, h);
+
+					cairo_identity_matrix(cr);
+					cairo_stroke(cr);
+				}
 				cairo_restore(cr);
+
 				step += 5;
 			}
 		}
 
+		if (show_fps) {
+			fps_draw(cr, device->name, &last_fps, &now);
+			last_fps = now;
+		}
 
-#if !SINGLE_BUFFERED
-		cairo_pop_group_to_source(cr);
-		cairo_set_operator(cr, CAIRO_OPERATOR_SOURCE);
-		cairo_paint(cr);
-#endif
 		cairo_destroy(cr);
 
 		fb->show (fb);
 		fb->destroy (fb);
 
 		frames++;
-		delta = now.tv_sec - last.tv_sec;
-		delta += (now.tv_usec - last.tv_usec)*1e-6;
+		delta = now.tv_sec - last_tty.tv_sec;
+		delta += (now.tv_usec - last_tty.tv_usec)*1e-6;
 		if (delta >  5) {
 			printf("%.2f fps\n", frames/delta);
-			last = now;
+			last_tty = now;
 			frames = 0;
 		}
 	} while (1);
