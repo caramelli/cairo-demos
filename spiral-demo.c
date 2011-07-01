@@ -15,6 +15,9 @@ static struct source{
 	int width, height;
 } *sources;
 static int num_sources;
+static size_t in_pixels, out_pixels;
+
+int prescale = 1;
 
 static void
 fps_draw (cairo_t *cr, const char *name,
@@ -134,7 +137,79 @@ _cairo_image_surface_create_from_pixbuf(const GdkPixbuf *pixbuf)
 	return surface;
 }
 
-static void load_sources(const char *path, cairo_surface_t *target)
+static int load_sources_file(const char *filename, cairo_surface_t *target)
+{
+	GdkPixbuf *pb;
+	cairo_surface_t *surface, *image;
+	cairo_status_t status;
+	cairo_t *cr;
+	int width, height;
+	int ok = 0;
+
+	pb = gdk_pixbuf_new_from_file(filename, NULL);
+
+	if (pb == NULL)
+		return 0;
+
+	image = _cairo_image_surface_create_from_pixbuf(pb);
+	g_object_unref(pb);
+
+	width = cairo_image_surface_get_width(image);
+	height = cairo_image_surface_get_height(image);
+	if (prescale) {
+		int max = width > height ? width : height;
+		if (max > 512) {
+			if (width > height) {
+				height = height * 512 / width;
+				width = 512;
+			} else {
+				width = width * 512 / height;
+				height = 512;
+			}
+		}
+	}
+
+	surface = cairo_surface_create_similar(target,
+					       CAIRO_CONTENT_COLOR,
+					       //cairo_surface_get_content(image),
+					       width, height);
+
+	cr = cairo_create(surface);
+	cairo_scale(cr, 
+		    width / (float)cairo_image_surface_get_width(image),
+		    height / (float)cairo_image_surface_get_height(image));
+	cairo_set_source_surface(cr, image, 0, 0);
+	cairo_set_operator(cr, CAIRO_OPERATOR_SOURCE);
+	cairo_paint(cr);
+	status = cairo_status(cr);
+	cairo_destroy(cr);
+
+	if (status == CAIRO_STATUS_SUCCESS) {
+		struct source *s;
+
+		s = realloc(sources,
+			    (num_sources+1)*sizeof(struct source));
+		if (s) {
+			s[num_sources].surface =
+				cairo_surface_reference(surface);
+			s[num_sources].width = width;
+			s[num_sources].height = height;
+			num_sources++;
+			sources = s;
+
+			in_pixels += cairo_image_surface_get_width(image)*cairo_image_surface_get_height(image);
+			out_pixels += width * height;
+			ok = 1;
+		}
+	}
+
+	cairo_surface_destroy(image);
+	cairo_surface_destroy(surface);
+
+	return ok;
+}
+
+static void load_sources_dir(const char *path, cairo_surface_t *target)
 {
 	struct dirent *de;
 	DIR *dir;
@@ -145,13 +220,8 @@ static void load_sources(const char *path, cairo_surface_t *target)
 		return;
 
 	while ((de = readdir(dir))) {
-		GdkPixbuf *pb;
-		gchar *filename;
-		cairo_surface_t *surface, *image;
-		cairo_status_t status;
-		cairo_t *cr;
 		struct stat st;
-
+		gchar *filename;
 		if (de->d_name[0] == '.')
 			continue;
 
@@ -163,57 +233,31 @@ static void load_sources(const char *path, cairo_surface_t *target)
 		}
 
 		if (S_ISDIR(st.st_mode)) {
-			load_sources(filename, target);
+			load_sources_dir(filename, target);
 			g_free(filename);
 			continue;
 		}
 
-		pb = gdk_pixbuf_new_from_file(filename, NULL);
+		count += load_sources_file(filename, target);
 		g_free(filename);
-
-		if (pb == NULL)
-			continue;
-
-		image = _cairo_image_surface_create_from_pixbuf(pb);
-		g_object_unref(pb);
-
-		surface = cairo_surface_create_similar(target,
-						       cairo_surface_get_content(image),
-						       cairo_image_surface_get_width(image),
-						       cairo_image_surface_get_height(image));
-
-		cr = cairo_create(surface);
-		cairo_set_source_surface(cr, image, 0, 0);
-		cairo_set_operator(cr, CAIRO_OPERATOR_SOURCE);
-		cairo_paint(cr);
-		status = cairo_status(cr);
-		cairo_destroy(cr);
-
-		if (status == CAIRO_STATUS_SUCCESS) {
-			struct source *s;
-
-			s = realloc(sources,
-				    (num_sources+1)*sizeof(struct source));
-			if (s) {
-				s[num_sources].surface =
-					cairo_surface_reference(surface);
-				s[num_sources].width =
-					cairo_image_surface_get_width(image);
-				s[num_sources].height =
-					cairo_image_surface_get_height(image);
-				num_sources++;
-				count++;
-				sources = s;
-			}
-		}
-
-		cairo_surface_destroy(image);
-		cairo_surface_destroy(surface);
 	}
 	closedir(dir);
 
 	if (count)
 		printf("Loaded %d images from %s\n", count, path);
+}
+
+static void load_sources(const char *path, cairo_surface_t *target)
+{
+	struct stat st;
+
+	if (stat(path, &st))
+		return;
+
+	if (S_ISDIR(st.st_mode))
+		load_sources_dir(path, target);
+	else
+		load_sources_file(path, target);
 }
 
 int main(int argc, char **argv)
@@ -253,7 +297,7 @@ int main(int argc, char **argv)
 	}
 
 	load_sources(path, device->get_framebuffer(device)->surface);
-	printf("Loaded %d images in total from %s\n", num_sources, path);
+	printf("Loaded %d images, %d/%d pixels in total from %s\n", num_sources, out_pixels, in_pixels, path);
 
 	gettimeofday(&start, 0); now = last_tty = last_fps = start;
 	frames = 0;
