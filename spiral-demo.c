@@ -223,6 +223,7 @@ int main(int argc, char **argv)
 	int theta, frames, n;
 	int show_path = 1;
 	int show_outline = 1;
+	int show_images = 1;
 	int show_fps = 1;
 
 	device = device_open(argc, argv);
@@ -235,6 +236,8 @@ int main(int argc, char **argv)
 		show_path = 0;
 	    } else if (strcmp (argv[n], "--hide-outline") == 0) {
 		show_outline = 0;
+	    } else if (strcmp (argv[n], "--hide-images") == 0) {
+		show_images = 0;
 	    } else if (strcmp (argv[n], "--hide-fps") == 0) {
 		show_fps = 0;
 	    }
@@ -300,18 +303,20 @@ int main(int argc, char **argv)
 				int h = 2*ceil(step/M_SQRT2/5*3 * (1+theta/360.));
 
 				cairo_save(cr);
-				cairo_translate(cr, width/2+dx, height/2+dy);
-				cairo_rotate(cr, M_PI/2+spin+(rotation+theta)/180.*M_PI);
-				cairo_scale(cr,
-					    w/(double)source->width,
-					    h/(double)source->height);
-				cairo_set_source_surface(cr, source->surface,
-							 -source->width/2,
-							 -source->height/2);
-				cairo_pattern_set_extend(cairo_get_source(cr), CAIRO_EXTEND_NONE);
-				cairo_pattern_set_filter(cairo_get_source(cr), CAIRO_FILTER_BILINEAR);
-				cairo_identity_matrix(cr);
-				cairo_paint(cr);
+				if (show_images) {
+					cairo_translate(cr, width/2+dx, height/2+dy);
+					cairo_rotate(cr, M_PI/2+spin+(rotation+theta)/180.*M_PI);
+					cairo_scale(cr,
+						    w/(double)source->width,
+						    h/(double)source->height);
+					cairo_set_source_surface(cr, source->surface,
+								 -source->width/2,
+								 -source->height/2);
+					cairo_pattern_set_extend(cairo_get_source(cr), CAIRO_EXTEND_NONE);
+					cairo_pattern_set_filter(cairo_get_source(cr), CAIRO_FILTER_BILINEAR);
+					cairo_identity_matrix(cr);
+					cairo_paint(cr);
+				}
 
 				if (show_outline) {
 					cairo_set_source_rgb(cr, 1, 1, 1);
