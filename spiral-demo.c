@@ -136,6 +136,7 @@ static void load_sources(const char *path, cairo_surface_t *target)
 {
 	struct dirent *de;
 	DIR *dir;
+	int count = 0;
 
 	dir = opendir(path);
 	if (dir == NULL)
@@ -199,6 +200,7 @@ static void load_sources(const char *path, cairo_surface_t *target)
 				s[num_sources].height =
 					cairo_image_surface_get_height(image);
 				num_sources++;
+				count++;
 				sources = s;
 			}
 		}
@@ -208,7 +210,8 @@ static void load_sources(const char *path, cairo_surface_t *target)
 	}
 	closedir(dir);
 
-	printf("Loaded %d images from %s\n", num_sources, path);
+	if (count)
+		printf("Loaded %d images from %s\n", count, path);
 }
 
 int main(int argc, char **argv)
@@ -225,9 +228,9 @@ int main(int argc, char **argv)
 	device = device_open(argc, argv);
 
 	for (n = 1; n < argc; n++) {
-	    if (strcmp (argv[n], "--images") == 0) {
-		path = argv[n+1];
-		n++;
+		if (strcmp (argv[n], "--images") == 0) {
+			path = argv[n+1];
+			n++;
 	    } else if (strcmp (argv[n], "--hide-path") == 0) {
 		show_path = 0;
 	    } else if (strcmp (argv[n], "--hide-outline") == 0) {
@@ -245,6 +248,7 @@ int main(int argc, char **argv)
 	}
 
 	load_sources(path, device->get_framebuffer(device)->surface);
+	printf("Loaded %d images in total from %s\n", num_sources, path);
 
 	gettimeofday(&start, 0); now = last_tty = last_fps = start;
 	frames = 0;
