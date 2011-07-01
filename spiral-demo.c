@@ -40,6 +40,8 @@ fps_draw (cairo_t *cr, const char *name,
 	avg += filter[n];
     avg /= max + 1;
     filter[filter_pos++ % N_FILTER] = fps;
+    if (filter_pos < 5)
+	    return;
 
     snprintf (buf, sizeof (buf), "%s: %.1f fps", name, 1. / avg);
     cairo_set_font_size (cr, 18);
@@ -336,7 +338,8 @@ int main(int argc, char **argv)
 		}
 
 		if (show_fps) {
-			fps_draw(cr, device->name, &last_fps, &now);
+			if (last_fps.tv_sec)
+				fps_draw(cr, device->name, &last_fps, &now);
 			last_fps = now;
 		}
 
