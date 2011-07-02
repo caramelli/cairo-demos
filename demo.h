@@ -1,5 +1,7 @@
-#include <cairo.h>
 #include <stdint.h>
+
+#include <cairo.h>
+#include <gdk-pixbuf/gdk-pixbuf.h>
 
 struct device;
 struct framebuffer;
@@ -56,3 +58,6 @@ struct device *drm_open (int argc, char **argv);
 #else
 static inline struct device *drm_open (int argc, char **argv) { return 0; }
 #endif
+
+cairo_surface_t *
+_cairo_image_surface_create_from_pixbuf(const GdkPixbuf *pixbuf);

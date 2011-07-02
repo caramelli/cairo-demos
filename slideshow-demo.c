@@ -7,7 +7,6 @@
 #include <string.h>
 #include <math.h>
 
-#include <gdk-pixbuf/gdk-pixbuf.h>
 #include "demo.h"
 
 static struct source {
@@ -58,84 +57,6 @@ fps_draw (cairo_t *cr, const char *name,
     cairo_move_to (cr, 4 - extents.x_bearing, 4 - extents.y_bearing);
     cairo_set_source_rgb (cr, .95, .95, .95);
     cairo_show_text (cr, buf);
-}
-
-static cairo_surface_t *
-_cairo_image_surface_create_from_pixbuf(const GdkPixbuf *pixbuf)
-{
-	gint width = gdk_pixbuf_get_width (pixbuf);
-	gint height = gdk_pixbuf_get_height (pixbuf);
-	guchar *gdk_pixels = gdk_pixbuf_get_pixels (pixbuf);
-	int gdk_rowstride = gdk_pixbuf_get_rowstride (pixbuf);
-	int n_channels = gdk_pixbuf_get_n_channels (pixbuf);
-	int cairo_stride;
-	guchar *cairo_pixels;
-	cairo_format_t format;
-	cairo_surface_t *surface;
-	int j;
-
-	if (n_channels == 3)
-		format = CAIRO_FORMAT_RGB24;
-	else
-		format = CAIRO_FORMAT_ARGB32;
-
-	surface = cairo_image_surface_create(format, width, height);
-	if (cairo_surface_status(surface))
-		return surface;
-
-	cairo_stride = cairo_image_surface_get_stride (surface);
-	cairo_pixels = cairo_image_surface_get_data(surface);
-
-	for (j = height; j; j--) {
-		guchar *p = gdk_pixels;
-		guchar *q = cairo_pixels;
-
-		if (n_channels == 3) {
-			guchar *end = p + 3 * width;
-
-			while (p < end) {
-#if G_BYTE_ORDER == G_LITTLE_ENDIAN
-				q[0] = p[2];
-				q[1] = p[1];
-				q[2] = p[0];
-#else
-				q[1] = p[0];
-				q[2] = p[1];
-				q[3] = p[2];
-#endif
-				p += 3;
-				q += 4;
-			}
-		} else {
-			guchar *end = p + 4 * width;
-			guint t1,t2,t3;
-
-#define MULT(d,c,a,t) G_STMT_START { t = c * a + 0x7f; d = ((t >> 8) + t) >> 8; } G_STMT_END
-
-			while (p < end) {
-#if G_BYTE_ORDER == G_LITTLE_ENDIAN
-				MULT(q[0], p[2], p[3], t1);
-				MULT(q[1], p[1], p[3], t2);
-				MULT(q[2], p[0], p[3], t3);
-				q[3] = p[3];
-#else
-				q[0] = p[3];
-				MULT(q[1], p[0], p[3], t1);
-				MULT(q[2], p[1], p[3], t2);
-				MULT(q[3], p[2], p[3], t3);
-#endif
-
-				p += 4;
-				q += 4;
-			}
-#undef MULT
-		}
-
-		gdk_pixels += gdk_rowstride;
-		cairo_pixels += cairo_stride;
-	}
-
-	return surface;
 }
 
 static int load_sources_file(const char *filename,
