@@ -50,8 +50,10 @@ fps_draw (cairo_t *cr, const char *name,
     cairo_set_font_size (cr, 18);
     cairo_text_extents (cr, buf, &extents);
 
+    cairo_set_operator(cr, CAIRO_OPERATOR_OVER);
+
     cairo_rectangle (cr, 4-1, 4-1, extents.width+2, extents.height+2);
-    cairo_set_source_rgba (cr, .0, .0, .0, .85);
+    cairo_set_source_rgba (cr, .0, .0, .0, .5);
     cairo_fill (cr);
 
     cairo_move_to (cr, 4 - extents.x_bearing, 4 - extents.y_bearing);

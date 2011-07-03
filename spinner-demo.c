@@ -46,6 +46,8 @@ fps_draw (cairo_t *cr, const char *name,
     if (filter_pos < 5)
 	    return;
 
+    cairo_set_operator(cr, CAIRO_OPERATOR_OVER);
+
     snprintf (buf, sizeof (buf), "%s: %.1f fps", name, 1. / avg);
     cairo_set_font_size (cr, 18);
     cairo_text_extents (cr, buf, &extents);

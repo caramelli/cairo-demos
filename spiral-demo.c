@@ -16,7 +16,7 @@ static struct source{
 static int num_sources;
 static size_t in_pixels, out_pixels;
 
-int prescale = 1;
+int prescale = 0;
 
 static void
 fps_draw (cairo_t *cr, const char *name,
