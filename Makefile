@@ -29,7 +29,7 @@ else
 DEFINES+=-DHAVE_GLX=0
 endif
 
-all: spinner-demo spiral-demo slideshow-demo
+all: spinner-demo spiral-demo slideshow-demo tiger-demo
 
 ifeq ($(shell pkg-config --exists poppler-glib && echo 1), 1)
 all: poppler-demo
@@ -47,6 +47,8 @@ slideshow-demo: slideshow-demo.c $(SOURCES) demo.h Makefile
 	$(CC) $(DEFINES) $(CFLAGS) -o $@ slideshow-demo.c $(SOURCES) $(LIBS)
 poppler-demo: poppler-demo.c $(SOURCES) demo.h Makefile
 	$(CC) $(DEFINES) $(CFLAGS) -o $@ poppler-demo.c $(SOURCES) $(LIBS)
+tiger-demo: tiger-demo.c $(SOURCES) demo.h Makefile tiger.inc
+	$(CC) $(DEFINES) $(CFLAGS) -o $@ tiger-demo.c $(SOURCES) $(LIBS)
 clean:
 	rm -f *-demo
 
