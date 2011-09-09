@@ -38,7 +38,7 @@ struct device *
 glx_open (int argc, char **argv)
 {
 	int rgba_attribs[] = {
-	       	GLX_RGBA,
+		GLX_RGBA,
 		GLX_RED_SIZE, 1,
 		GLX_GREEN_SIZE, 1,
 		GLX_BLUE_SIZE, 1,
@@ -69,6 +69,8 @@ glx_open (int argc, char **argv)
 	scr = XScreenOfDisplay (dpy, screen);
 	device->base.width = WidthOfScreen (scr);
 	device->base.height = HeightOfScreen (scr);
+	device_get_size (argc, argv,
+			 &device->base.width, &device->base.height);
 
 	vi = glXChooseVisual (dpy, DefaultScreen (dpy), rgba_attribs);
 	if (vi == NULL) {
@@ -98,7 +100,7 @@ glx_open (int argc, char **argv)
 	device->device = cairo_glx_device_create(dpy, device->ctx);
 
 	device->base.scanout =
-	       	cairo_gl_surface_create_for_window (device->device,
+		cairo_gl_surface_create_for_window (device->device,
 						    device->drawable,
 						    device->base.width,
 						    device->base.height);

@@ -28,6 +28,7 @@ struct slide {
 };
 
 struct device *device_open(int argc, char **argv);
+int device_get_size(int argc, char **argv, int *width, int *height);
 
 #if HAVE_GLX
 struct device *glx_open (int argc, char **argv);

@@ -4,6 +4,29 @@
 
 #include "demo.h"
 
+int device_get_size(int argc, char **argv, int *width, int *height)
+{
+	int w, h, n;
+
+	for (n = 1; n < argc; n++) {
+		if (strncmp (argv[n], "--size=", 7) == 0) {
+			if (sscanf (argv[n]+7, "%dx%d", &w, &h) == 2) {
+				*width = w;
+				*height = h;
+				return 1;
+			}
+		} else if (strcmp (argv[n], "--size") == 0) {
+			if (sscanf (argv[++n], "%dx%d", &w, &h) == 2) {
+				*width = w;
+				*height = h;
+				return 1;
+			}
+		}
+	}
+
+	return 0;
+}
+
 struct device *device_open(int argc, char **argv)
 {
     struct device *device = 0;

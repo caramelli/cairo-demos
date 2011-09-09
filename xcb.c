@@ -99,6 +99,7 @@ xcb_open (int argc, char **argv)
 
     device->base.width = s->width_in_pixels;
     device->base.height = s->height_in_pixels;
+    device_get_size (argc, argv, &device->base.width, &device->base.height);
 
     xcb_create_window (c,
 		       s->root_depth,

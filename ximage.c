@@ -136,6 +136,7 @@ ximage_open (int argc, char **argv)
     scr = XScreenOfDisplay (dpy, screen);
     device->base.width = WidthOfScreen (scr);
     device->base.height = HeightOfScreen (scr);
+    device_get_size (argc, argv, &device->base.width, &device->base.height);
 
     attr.override_redirect = True;
     device->drawable = XCreateWindow (dpy, DefaultRootWindow (dpy),
