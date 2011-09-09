@@ -16,7 +16,8 @@ int device_get_size(int argc, char **argv, int *width, int *height)
 				return 1;
 			}
 		} else if (strcmp (argv[n], "--size") == 0) {
-			if (sscanf (argv[++n], "%dx%d", &w, &h) == 2) {
+			if (n + 1 < argc &&
+			    sscanf (argv[++n], "%dx%d", &w, &h) == 2) {
 				*width = w;
 				*height = h;
 				return 1;
@@ -26,6 +27,26 @@ int device_get_size(int argc, char **argv, int *width, int *height)
 
 	return 0;
 }
+
+int device_get_benchmark(int argc, char **argv)
+{
+	int n, count;
+
+	count = -1;
+	for (n = 1; n < argc; n++) {
+		if (strncmp (argv[n], "--benchmark=", 12) == 0) {
+			return atoi(argv[n]+12);
+		} else if (strcmp (argv[n], "--benchmark") == 0) {
+			if (n + 1 < argc)
+				return atoi(argv[++n]);
+			else
+				return 0;
+		}
+	}
+
+	return count;
+}
+
 
 struct device *device_open(int argc, char **argv)
 {

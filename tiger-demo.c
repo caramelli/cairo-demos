@@ -124,8 +124,12 @@ int main (int argc, char **argv)
 	double delta;
 	int frame = 0;
 	int frames = 0;
+	int benchmark;
 
 	device = device_open(argc, argv);
+	benchmark = device_get_benchmark(argc, argv);
+	if (benchmark == 0)
+		benchmark = 20;
 
 	gettimeofday(&start, 0); now = last_tty = last_fps = start;
 	do {
@@ -134,7 +138,7 @@ int main (int argc, char **argv)
 		tiger (device, fb, scale, rotation);
 
 		gettimeofday(&now, NULL);
-		if (last_fps.tv_sec)
+		if (benchmark < 0 && last_fps.tv_sec)
 			fps_draw(fb, device->name, &last_fps, &now);
 		last_fps = now;
 
@@ -145,7 +149,7 @@ int main (int argc, char **argv)
 		if (frame % 256 == 0)
 			factor = 1./factor;
 
-		{
+		if (benchmark < 0) {
 			delta = now.tv_sec - last_tty.tv_sec;
 			delta += (now.tv_usec - last_tty.tv_usec)*1e-6;
 			frames++;
@@ -153,6 +157,15 @@ int main (int argc, char **argv)
 				printf("%.2f fps\n", frames/delta);
 				last_tty = now;
 				frames = 0;
+			}
+		}
+
+		if (benchmark > 0) {
+			delta = now.tv_sec - start.tv_sec;
+			delta += (now.tv_usec - start.tv_usec)*1e-6;
+			if (delta > benchmark) {
+				printf("%.2f fps\n", frame / delta);
+				break;
 			}
 		}
 
