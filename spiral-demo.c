@@ -244,7 +244,15 @@ int main(int argc, char **argv)
 
 		cairo_set_operator(cr, CAIRO_OPERATOR_OVER);
 		if (show_path) {
-			cairo_set_source_rgb(cr, 1, 1, 1);
+			cairo_pattern_t *p;
+
+			p = cairo_pattern_create_radial(width/2, height/2, 0,
+							width/2, height/2, MAX(width, height)/2);
+			cairo_pattern_add_color_stop_rgb(p, 0, 1, 1, 1);
+			cairo_pattern_add_color_stop_rgb(p, 1, 0, 0, 0);
+			cairo_set_source(cr, p);
+			cairo_pattern_destroy (p);
+
 			cairo_set_line_width(cr, 5);
 			cairo_set_line_cap(cr, CAIRO_LINE_CAP_ROUND);
 
