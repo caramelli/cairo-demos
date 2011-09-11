@@ -29,6 +29,7 @@ struct slide {
 
 struct device *device_open(int argc, char **argv);
 int device_get_size(int argc, char **argv, int *width, int *height);
+cairo_antialias_t device_get_antialias(int argc, char **argv);
 int device_get_benchmark(int argc, char **argv);
 
 #if HAVE_GLX

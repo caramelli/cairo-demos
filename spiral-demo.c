@@ -218,7 +218,8 @@ int main(int argc, char **argv)
 	}
 
 	load_sources(path, device->get_framebuffer(device)->surface);
-	printf("Loaded %d images, %d/%d pixels in total from %s\n", num_sources, out_pixels, in_pixels, path);
+	printf("Loaded %d images, %ld/%ld pixels in total from %s\n",
+	       num_sources, (long)out_pixels, (long)in_pixels, path);
 
 	gettimeofday(&start, 0); now = last_tty = last_fps = start;
 	frames = 0;

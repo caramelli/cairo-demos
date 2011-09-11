@@ -21,13 +21,18 @@
 
 #include "tiger.inc"
 
-static void tiger(struct device *device, struct framebuffer *fb,
-		  double scale, double rotation)
+static void tiger(struct device *device,
+		  struct framebuffer *fb,
+		  cairo_antialias_t antialias,
+		  double scale,
+		  double rotation)
 {
 	cairo_t *cr;
 	int i;
 
 	cr = cairo_create (fb->surface);
+
+	cairo_set_antialias (cr, antialias);
 
 	cairo_set_operator (cr, CAIRO_OPERATOR_SOURCE);
 	cairo_set_source_rgba (cr, 0.1, 0.2, 0.3, 1.0);
@@ -117,6 +122,8 @@ int main (int argc, char **argv)
 	struct device *device;
 	struct timeval start, last_tty, last_fps, now;
 
+	cairo_antialias_t antialias;
+
 	double scale = 0.1;
 	double factor = 1.05;
 	double rotation = 0.0;
@@ -127,6 +134,7 @@ int main (int argc, char **argv)
 	int benchmark;
 
 	device = device_open(argc, argv);
+	antialias = device_get_antialias(argc, argv);
 	benchmark = device_get_benchmark(argc, argv);
 	if (benchmark == 0)
 		benchmark = 20;
@@ -135,7 +143,7 @@ int main (int argc, char **argv)
 	do {
 		struct framebuffer *fb = device->get_framebuffer (device);
 
-		tiger (device, fb, scale, rotation);
+		tiger (device, fb, antialias, scale, rotation);
 
 		gettimeofday(&now, NULL);
 		if (benchmark < 0 && last_fps.tv_sec)

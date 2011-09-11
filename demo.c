@@ -47,6 +47,37 @@ int device_get_benchmark(int argc, char **argv)
 	return count;
 }
 
+static cairo_antialias_t str_to_antialias(const char *str)
+{
+	if (strcmp (str, "none") == 0)
+		return CAIRO_ANTIALIAS_NONE;
+	else if (strcmp (str, "fast") == 0)
+		return CAIRO_ANTIALIAS_FAST;
+	else if (strcmp (str, "good") == 0)
+		return CAIRO_ANTIALIAS_GOOD;
+	else if (strcmp (str, "best") == 0)
+		return CAIRO_ANTIALIAS_BEST;
+	else
+		return CAIRO_ANTIALIAS_DEFAULT;
+}
+
+cairo_antialias_t device_get_antialias(int argc, char **argv)
+{
+	int n;
+
+	for (n = 1; n < argc; n++) {
+		if (strncmp (argv[n], "--antialias=", 12) == 0) {
+			return str_to_antialias(argv[n]+12);
+		} else if (strcmp (argv[n], "--antialias") == 0) {
+			if (n + 1 < argc)
+				return str_to_antialias(argv[++n]);
+			else
+				return CAIRO_ANTIALIAS_DEFAULT;
+		}
+	}
+
+	return CAIRO_ANTIALIAS_DEFAULT;
+}
 
 struct device *device_open(int argc, char **argv)
 {

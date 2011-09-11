@@ -244,8 +244,8 @@ int main(int argc, char **argv)
 		load_sources("/usr/share/backgrounds", device,
 			     device->get_framebuffer(device)->surface);
 
-	printf("Loaded %d images, %d/%d pixels in total\n",
-	       num_sources, out_pixels, in_pixels);
+	printf("Loaded %d images, %ld/%ld pixels in total\n",
+	       num_sources, (long)out_pixels, (long)in_pixels);
 	if (num_sources == 0)
 		return 0;
 
