@@ -21,6 +21,7 @@ DEFINES+=-DHAVE_XCB=0
 endif
 
 GLX:=$(shell pkg-config --exists cairo-gl && echo 1 || echo 0)
+GLX:=0
 ifneq ($(GLX),0)
 DEFINES+=-DHAVE_GLX=1
 SOURCES+=glx.c
@@ -29,7 +30,7 @@ else
 DEFINES+=-DHAVE_GLX=0
 endif
 
-all: spinner-demo spiral-demo slideshow-demo tiger-demo
+all: spinner-demo spiral-demo slideshow-demo tiger-demo fish-demo
 
 ifeq ($(shell pkg-config --exists poppler-glib && echo 1), 1)
 all: poppler-demo
@@ -49,6 +50,8 @@ poppler-demo: poppler-demo.c $(SOURCES) demo.h Makefile
 	$(CC) $(DEFINES) $(CFLAGS) -o $@ poppler-demo.c $(SOURCES) $(LIBS)
 tiger-demo: tiger-demo.c $(SOURCES) demo.h Makefile tiger.inc
 	$(CC) $(DEFINES) $(CFLAGS) -o $@ tiger-demo.c $(SOURCES) $(LIBS)
+fish-demo: fish-demo.c $(SOURCES) demo.h Makefile
+	$(CC) $(DEFINES) $(CFLAGS) -o $@ fish-demo.c $(SOURCES) $(LIBS)
 clean:
 	rm -f *-demo
 
