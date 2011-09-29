@@ -3,12 +3,18 @@
 #include "demo.h"
 
 #include <stdlib.h>
+#include <string.h>
+
+#include <unistd.h>
 
 struct xcb_device {
     struct device base;
 
     xcb_connection_t *connection;
     xcb_window_t drawable;
+
+    int double_buffered;
+    int async;
 };
 
 struct xcb_framebuffer {
@@ -29,14 +35,26 @@ show (struct framebuffer *abstract_framebuffer)
 {
     struct xcb_framebuffer *fb = (struct xcb_framebuffer *) abstract_framebuffer;
     struct xcb_device *device = (struct xcb_device *) fb->base.device;
-    cairo_t *cr;
 
-    cr = cairo_create (device->base.scanout);
-    cairo_set_source_surface (cr, fb->base.surface, 0, 0);
-    cairo_paint (cr);
-    cairo_destroy (cr);
+    if (device->double_buffered) {
+	cairo_t *cr = cairo_create (device->base.scanout);
+	cairo_set_source_surface (cr, fb->base.surface, 0, 0);
+	cairo_paint (cr);
+	cairo_destroy (cr);
+    }
 
-    xcb_flush (device->connection);
+    if (device->async) {
+	xcb_flush (device->connection);
+    } else {
+	cairo_rectangle_int_t r;
+
+	r.x = r.y = 0;
+	r.width = r.height = 1;
+
+	cairo_surface_unmap_image(device->base.scanout,
+				  cairo_surface_map_to_image(device->base.scanout, &r));
+    }
+    //sleep(1);
 }
 
 static struct framebuffer *
@@ -50,10 +68,14 @@ get_fb (struct device *abstract_device)
     fb->base.show = show;
     fb->base.destroy = destroy;
 
-    fb->base.surface = cairo_surface_create_similar (device->base.scanout,
-						     CAIRO_CONTENT_COLOR,
-						     device->base.width,
-						     device->base.height);
+    if (device->double_buffered) {
+	fb->base.surface = cairo_surface_create_similar (device->base.scanout,
+							 CAIRO_CONTENT_COLOR,
+							 device->base.width,
+							 device->base.height);
+    } else {
+	fb->base.surface = cairo_surface_reference (device->base.scanout);
+    }
 
     return &fb->base;
 }
@@ -83,6 +105,7 @@ xcb_open (int argc, char **argv)
     xcb_screen_t *s;
     xcb_visualtype_t *v;
     uint32_t values[] = { 1 };
+    int i;
 
     c = xcb_connect (NULL, NULL);
     if (c == NULL)
@@ -93,6 +116,15 @@ xcb_open (int argc, char **argv)
     device->base.get_framebuffer = get_fb;
     device->connection = c;
     device->drawable = xcb_generate_id (c);
+
+    device->double_buffered = 1;
+    device->async = 0;
+    for (i = 1; i < argc; i++) {
+	if (strcmp (argv[i], "--single") == 0)
+	    device->double_buffered = 0;
+	else if (strcmp (argv[i], "--async") == 0)
+	    device->async = 1;
+    }
 
     s = xcb_setup_roots_iterator (xcb_get_setup (c)).data;
     v = lookup_visual (s, s->root_visual);
