@@ -17,15 +17,16 @@ static cairo_pattern_t *create_background(struct device *device)
 {
 	cairo_surface_t *surface, *image;
 	cairo_pattern_t *pattern;
+	cairo_matrix_t m;
 	int width, height;
 	double sf;
 	cairo_t *cr;
 
 	image = cairo_image_surface_create_from_png("fishbg.png");
 
-	sf = device->height / (double) cairo_image_surface_get_height(image);
-	height = device->height;
-	width = sf * cairo_image_surface_get_width(image);
+	height = cairo_image_surface_get_height(image);
+	width = cairo_image_surface_get_width(image);
+	sf = height/ (double)device->height;
 
 	surface = cairo_surface_create_similar(device->scanout,
 					       CAIRO_CONTENT_COLOR,
@@ -33,7 +34,6 @@ static cairo_pattern_t *create_background(struct device *device)
 	cr = cairo_create(surface);
 	cairo_surface_destroy(surface);
 
-	cairo_scale(cr, sf, sf);
 	cairo_set_source_surface(cr, image, 0, 0);
 	cairo_surface_destroy(image);
 	cairo_paint(cr);
@@ -41,6 +41,8 @@ static cairo_pattern_t *create_background(struct device *device)
 	cairo_destroy (cr);
 
 	cairo_pattern_set_extend(pattern, CAIRO_EXTEND_REFLECT);
+	cairo_matrix_init_scale(&m, sf,sf);
+	cairo_pattern_set_matrix(pattern, &m);
 	return pattern;
 }
 
