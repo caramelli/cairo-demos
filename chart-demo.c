@@ -158,13 +158,13 @@ bg_draw (struct device *device, cairo_t *cr)
 	cairo_paint (cr);
 
 	for (x = 50; x < device->width; x += 50) {
-		cairo_move_to (cr, x, 0);
-		cairo_line_to (cr, x, device->height);
+		cairo_move_to (cr, x+.5, 0);
+		cairo_line_to (cr, x+.5, device->height);
 	}
 
 	for (y = 50; y < device->height; y += 50) {
-		cairo_move_to (cr, 0, y);
-		cairo_line_to (cr, device->width, y);
+		cairo_move_to (cr, 0, y+.5);
+		cairo_line_to (cr, device->width, y+.5);
 	}
 
 	cairo_set_line_width (cr, 1.);
