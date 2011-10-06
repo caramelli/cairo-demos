@@ -88,6 +88,7 @@ struct device *device_open(int argc, char **argv)
 	XIMAGE,
 	XCB,
 	GLX,
+	COGL,
 	DRM,
     } backend = AUTO;
     int n;
@@ -103,6 +104,8 @@ struct device *device_open(int argc, char **argv)
 	    backend = DRM;
 	} else if (strcmp (argv[n], "--glx") == 0) {
 	    backend = GLX;
+	} else if (strcmp (argv[n], "--cogl") == 0) {
+	    backend = COGL;
 	}
     }
 
@@ -113,8 +116,10 @@ struct device *device_open(int argc, char **argv)
 	    device = xcb_open (argc, argv);
 	if (device == 0 && HAVE_XLIB)
 	    device = xlib_open (argc, argv);
-	if (device == 0 && HAVE_XLIB)
+	if (device == 0 && HAVE_GLX)
 	    device = glx_open (argc, argv);
+	if (device == 0 && HAVE_COGL)
+	    device = cogl_open (argc, argv);
 	if (device == 0 && HAVE_XIMAGE)
 	    device = ximage_open (argc, argv);
     } else switch (backend) {
@@ -130,6 +135,9 @@ struct device *device_open(int argc, char **argv)
 	break;
     case GLX:
 	device = glx_open (argc, argv);
+	break;
+    case COGL:
+	device = cogl_open (argc, argv);
 	break;
     case DRM:
 #if HAVE_DRM

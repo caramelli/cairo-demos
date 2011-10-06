@@ -32,6 +32,12 @@ int device_get_size(int argc, char **argv, int *width, int *height);
 cairo_antialias_t device_get_antialias(int argc, char **argv);
 int device_get_benchmark(int argc, char **argv);
 
+#if HAVE_COGL
+struct device *cogl_open (int argc, char **argv);
+#else
+static inline struct device *cogl_open (int argc, char **argv) { return 0; }
+#endif
+
 #if HAVE_GLX
 struct device *glx_open (int argc, char **argv);
 #else

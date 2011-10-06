@@ -30,6 +30,15 @@ else
 DEFINES+=-DHAVE_GLX=0
 endif
 
+COGL:=$(shell pkg-config --exists cairo-gl && echo 1 || echo 0)
+ifneq ($(COGL),0)
+DEFINES+=-DHAVE_COGL=1
+SOURCES+=cogl.c
+REQUIRES+=cairo-cogl
+else
+DEFINES+=-DHAVE_COGL=0
+endif
+
 all: spinner-demo spiral-demo slideshow-demo tiger-demo fish-demo flowers-demo gears-demo chart-demo
 
 ifeq ($(shell pkg-config --exists poppler-glib && echo 1), 1)
