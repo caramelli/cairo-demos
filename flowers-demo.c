@@ -346,52 +346,6 @@ flowers_update (int width, int height)
     }
 }
 
-static void
-fps_draw (struct framebuffer *fb, const char *name,
-	  const struct timeval *last,
-	  const struct timeval *now)
-{
-#define N_FILTER 25
-    static double filter[25];
-    static int filter_pos;
-    cairo_text_extents_t extents;
-    char buf[80];
-    double fps, avg;
-    int n, max;
-    cairo_t *cr;
-
-    fps = now->tv_sec - last->tv_sec;
-    fps += (now->tv_usec - last->tv_usec) / 1000000.;
-
-    max = N_FILTER;
-    avg = fps;
-    if (filter_pos < max)
-	max = filter_pos;
-    for (n = 0; n < max; n++)
-	avg += filter[n];
-    avg /= max + 1;
-    filter[filter_pos++ % N_FILTER] = fps;
-    if (filter_pos < 5)
-	    return;
-
-    cr = cairo_create (fb->surface);
-    cairo_set_operator(cr, CAIRO_OPERATOR_OVER);
-
-    snprintf (buf, sizeof (buf), "%s: %.1f fps", name, 1. / avg);
-    cairo_set_font_size (cr, 18);
-    cairo_text_extents (cr, buf, &extents);
-
-    cairo_rectangle (cr, 4-1, 4-1, extents.width+2, extents.height+2);
-    cairo_set_source_rgba (cr, .0, .0, .0, .85);
-    cairo_fill (cr);
-
-    cairo_move_to (cr, 4 - extents.x_bearing, 4 - extents.y_bearing);
-    cairo_set_source_rgb (cr, .95, .95, .95);
-    cairo_show_text (cr, buf);
-
-    cairo_destroy (cr);
-}
-
 int main (int argc, char **argv)
 {
 	struct device *device;
@@ -439,17 +393,17 @@ int main (int argc, char **argv)
 
 		draw(cr, opaque);
 
-		cairo_destroy(cr);
-
-		flowers_update(device->width, device->height);
-
 		gettimeofday(&now, NULL);
 		if (benchmark < 0 && last_fps.tv_sec)
-			fps_draw(fb, device->name, &last_fps, &now);
+			fps_draw(cr, device->name, &last_fps, &now);
 		last_fps = now;
+
+		cairo_destroy(cr);
 
 		fb->show (fb);
 		fb->destroy (fb);
+
+		flowers_update(device->width, device->height);
 
 		if (benchmark < 0) {
 			delta = now.tv_sec - last_tty.tv_sec;

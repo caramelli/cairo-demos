@@ -8,36 +8,6 @@
 #include <glib-object.h>
 #include <poppler.h>
 
-static void
-fps_draw (cairo_t *cr, const char *name, const struct timeval *last, const struct timeval *now)
-{
-#define N_FILTER 25
-    static double filter[25];
-    static int filter_pos;
-    cairo_text_extents_t extents;
-    char buf[80];
-    double fps;
-    int n, max;
-
-    fps = now->tv_sec - last->tv_sec;
-    fps += (now->tv_usec - last->tv_usec) / 1000000.;
-
-    max = N_FILTER;
-    if (filter_pos < max)
-	max = filter_pos;
-    for (n = 0; n < max; n++)
-	fps += filter[n];
-    fps /= max + 1;
-    filter[filter_pos++ % N_FILTER] = fps;
-
-    snprintf (buf, sizeof (buf), "%s: %.1f fps", name, 1. / fps);
-    cairo_set_font_size (cr, 12);
-    cairo_text_extents (cr, buf, &extents);
-    cairo_move_to (cr, 4 - extents.x_bearing, 4 - extents.y_bearing);
-    cairo_set_source_rgb (cr, .05, .05, .05);
-    cairo_show_text (cr, buf);
-}
-
 int
 main (int argc, char **argv)
 {

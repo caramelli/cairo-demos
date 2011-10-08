@@ -70,3 +70,8 @@ static inline struct device *drm_open (int argc, char **argv) { return 0; }
 
 cairo_surface_t *
 _cairo_image_surface_create_from_pixbuf(const GdkPixbuf *pixbuf);
+
+void
+fps_draw (cairo_t *cr, const char *name,
+	  const struct timeval *last,
+	  const struct timeval *now);

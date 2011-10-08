@@ -18,46 +18,6 @@ static size_t in_pixels, out_pixels;
 
 int prescale = 0;
 
-static void
-fps_draw (cairo_t *cr, const char *name,
-	  const struct timeval *last,
-	  const struct timeval *now)
-{
-#define N_FILTER 25
-    static double filter[25];
-    static int filter_pos;
-    cairo_text_extents_t extents;
-    char buf[80];
-    double fps, avg;
-    int n, max;
-
-    fps = now->tv_sec - last->tv_sec;
-    fps += (now->tv_usec - last->tv_usec) / 1000000.;
-
-    max = N_FILTER;
-    avg = fps;
-    if (filter_pos < max)
-	max = filter_pos;
-    for (n = 0; n < max; n++)
-	avg += filter[n];
-    avg /= max + 1;
-    filter[filter_pos++ % N_FILTER] = fps;
-    if (filter_pos < 5)
-	    return;
-
-    snprintf (buf, sizeof (buf), "%s: %.1f fps", name, 1. / avg);
-    cairo_set_font_size (cr, 18);
-    cairo_text_extents (cr, buf, &extents);
-
-    cairo_rectangle (cr, 4-1, 4-1, extents.width+2, extents.height+2);
-    cairo_set_source_rgba (cr, .0, .0, .0, .85);
-    cairo_fill (cr);
-
-    cairo_move_to (cr, 4 - extents.x_bearing, 4 - extents.y_bearing);
-    cairo_set_source_rgb (cr, .95, .95, .95);
-    cairo_show_text (cr, buf);
-}
-
 static int load_sources_file(const char *filename, cairo_surface_t *target)
 {
 	GdkPixbuf *pb;
