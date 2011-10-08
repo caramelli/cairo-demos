@@ -218,12 +218,8 @@ int main(int argc, char **argv)
 			    device->width/(double)left->width,
 			    device->height/(double)left->height);
 		cairo_set_source_surface(cr, left->surface, 0, 0);
-		cairo_pattern_set_extend(cairo_get_source(cr),
-					 CAIRO_EXTEND_NONE);
-		cairo_pattern_set_filter(cairo_get_source(cr),
-					 CAIRO_FILTER_BILINEAR);
-		cairo_identity_matrix(cr);
 		cairo_paint(cr);
+		cairo_identity_matrix(cr);
 
 		if (transition) {
 			struct source *right = &sources[(n + 1) % num_sources];
@@ -242,10 +238,6 @@ int main(int argc, char **argv)
 				    device->width/(double)right->width,
 				    device->height/(double)right->height);
 			cairo_set_source_surface(cr, right->surface, 0, 0);
-			cairo_pattern_set_extend(cairo_get_source(cr),
-						 CAIRO_EXTEND_NONE);
-			cairo_pattern_set_filter(cairo_get_source(cr),
-						 CAIRO_FILTER_BILINEAR);
 			cairo_identity_matrix(cr);
 			cairo_mask(cr, mask);
 			cairo_pattern_destroy(mask);
