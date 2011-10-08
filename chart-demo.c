@@ -229,12 +229,13 @@ int main (int argc, char **argv)
 	int frame = 0;
 	int frames = 0;
 	int benchmark;
+	cairo_antialias_t antialias;
 
 	struct chart c[5];
 	int n;
 
-
 	device = device_open(argc, argv);
+	antialias = device_get_antialias(argc, argv);
 	benchmark = device_get_benchmark(argc, argv);
 	if (benchmark == 0)
 		benchmark = 20;
@@ -257,7 +258,7 @@ int main (int argc, char **argv)
 			chart_fill(device, cr, &c[n], n + 1 < 5 ? &c[n+1] : NULL);
 		cairo_set_line_width (cr, 3);
 		cairo_set_line_join (cr, CAIRO_LINE_JOIN_ROUND);
-		cairo_set_antialias (cr, CAIRO_ANTIALIAS_DEFAULT);
+		cairo_set_antialias (cr, antialias);
 
 		for (n = 0; n < 5; n++)
 			chart_stroke(device, cr, &c[n]);
