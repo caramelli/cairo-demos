@@ -192,6 +192,7 @@ int main(int argc, char **argv)
 	int show_outline = 1;
 	int show_images = 1;
 	int show_fps = 1;
+	int fade = 1;
 
 	device = device_open(argc, argv);
 
@@ -207,6 +208,8 @@ int main(int argc, char **argv)
 		show_images = 0;
 	    } else if (strcmp (argv[n], "--hide-fps") == 0) {
 		show_fps = 0;
+	    } else if (strcmp (argv[n], "--no-fade") == 0) {
+		fade = 0;
 	    }
 	}
 
@@ -247,10 +250,14 @@ int main(int argc, char **argv)
 		if (show_path) {
 			cairo_pattern_t *p;
 
-			p = cairo_pattern_create_radial(width/2, height/2, 0,
-							width/2, height/2, MAX(width, height)/2);
-			cairo_pattern_add_color_stop_rgb(p, 0, 1, 1, 1);
-			cairo_pattern_add_color_stop_rgb(p, 1, 0, 0, 0);
+			if (fade) {
+				p = cairo_pattern_create_radial(width/2, height/2, 0,
+								width/2, height/2, MAX(width, height)/2);
+				cairo_pattern_add_color_stop_rgb(p, 0, 1, 1, 1);
+				cairo_pattern_add_color_stop_rgb(p, 1, 0, 0, 0);
+			} else {
+				p = cairo_pattern_create_rgb(1,1,1);
+			}
 			cairo_set_source(cr, p);
 			cairo_pattern_destroy (p);
 
@@ -286,16 +293,23 @@ int main(int argc, char **argv)
 						    w/(double)source->width,
 						    h/(double)source->height);
 					cairo_set_source_surface(cr, source->surface,
-								 -source->width/2,
-								 -source->height/2);
+								 -source->width/2.,
+								 -source->height/2.);
 					cairo_pattern_set_extend(cairo_get_source(cr), CAIRO_EXTEND_NONE);
 					cairo_pattern_set_filter(cairo_get_source(cr), CAIRO_FILTER_BILINEAR);
 					cairo_identity_matrix(cr);
-					cairo_paint(cr);
+					if (fade) {
+						cairo_paint_with_alpha(cr,
+						 1. - 2*sqrt((dx*dx + dy*dy)/(width*width + height*height)));
+					} else
+						cairo_paint(cr);
 				}
 
 				if (show_outline) {
-					cairo_set_source_rgb(cr, 1, 1, 1);
+					double alpha = 1;
+					if (fade)
+						 alpha = 1. - 2*sqrt((dx*dx + dy*dy)/(width*width + height*height));
+					cairo_set_source_rgb(cr, alpha, alpha, alpha);
 					cairo_set_line_width(cr, 2);
 
 					cairo_translate(cr, width/2+dx, height/2+dy);
