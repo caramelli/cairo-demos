@@ -13,7 +13,7 @@ struct fish {
 	int frame, rgb;
 };
 
-static cairo_pattern_t *create_background(struct device *device)
+static cairo_pattern_t *create_background(struct device *device, int *x1, int *x2)
 {
 	cairo_surface_t *surface, *image;
 	cairo_pattern_t *pattern;
@@ -43,6 +43,9 @@ static cairo_pattern_t *create_background(struct device *device)
 	cairo_pattern_set_extend(pattern, CAIRO_EXTEND_REFLECT);
 	cairo_matrix_init_scale(&m, sf,sf);
 	cairo_pattern_set_matrix(pattern, &m);
+
+	*x1 = (device->width - width * sf) / 2;
+	*x2 = device->width - *x1;
 	return pattern;
 }
 
@@ -87,16 +90,18 @@ static cairo_surface_t **create_strip(struct device *device)
 	return strip;
 }
 
-static void fish_init(struct device *device, struct fish *f)
+static void fish_init(struct device *device, struct fish *f, int x1, int x2)
 {
-	f->x = random() % (device->width + fish_width) - fish_width;
-	f->y = random() % (device->height + fish_height) - fish_height;
+	int w = x2 - x1;
+
+	f->x = random() % (w - fish_width) + x1;
+	f->y = random() % device->height;
 	f->z = 0;
 
-	f->dx = random() % 10 + 1;
+	f->dx = random() % 5 + 1;
 	if (random() % 2)
 		f->dx = -f->dx;
-	f->dy = random() % 10 + 1;
+	f->dy = random() % 3;
 	if (random() % 2)
 		f->dy = -f->dy;
 	f->dz = 0;
@@ -105,7 +110,7 @@ static void fish_init(struct device *device, struct fish *f)
 	f->rgb = random() % 3;
 }
 
-static void fish_draw(struct device *device, cairo_t *cr, struct fish *f, cairo_surface_t **strip)
+static void fish_draw(struct device *device, cairo_t *cr, struct fish *f, cairo_pattern_t *reflection, int x1, int x2, cairo_surface_t **strip)
 {
 	double sx = f->dx > 0 ? 1 : -1;
 	double tx = f->dx > 0 ? 0 : -fish_width;
@@ -116,13 +121,38 @@ static void fish_draw(struct device *device, cairo_t *cr, struct fish *f, cairo_
 	cairo_paint(cr);
 	cairo_restore(cr);
 
+	if (reflection) {
+		sx = -sx;
+		tx = f->dx > 0 ? -fish_width : 0;
+		tx -= sx*fish_width;
+
+		cairo_save(cr);
+		cairo_rectangle (cr, 0, 0, x1, device->height);
+		cairo_clip (cr);
+		cairo_scale(cr, sx, 1);
+		cairo_set_source_surface(cr, strip[f->rgb*16+f->frame], sx*(2*x1 - f->x) + tx, f->y);
+		cairo_identity_matrix(cr);
+		cairo_mask(cr, reflection);
+		cairo_restore(cr);
+
+		cairo_save(cr);
+		cairo_rectangle (cr, x2, 0, device->width-x2, device->height);
+		cairo_clip (cr);
+		cairo_scale(cr, sx, 1);
+		cairo_set_source_surface(cr, strip[f->rgb*16+f->frame], sx*(2*x2 - f->x) + tx, f->y);
+		cairo_identity_matrix(cr);
+		cairo_mask(cr, reflection);
+		cairo_restore(cr);
+	}
+
 	f->frame = (f->frame+1) % 16;
 	f->x += f->dx;
 	f->y += f->dy;
 
-	if (f->x < -fish_width || f->x >= device->width)
+	if (f->x < x1-10 || f->x > x2-fish_width+10) {
 		f->dx = -f->dx;
-	if (f->y < -fish_height || f->y >= device->height)
+	}
+	if (f->y < -10 || f->y > device->height - fish_height+10)
 		f->dy = -f->dy;
 }
 
@@ -186,6 +216,8 @@ int main (int argc, char **argv)
 	int frame = 0;
 	int frames = 0;
 	int benchmark;
+	cairo_pattern_t *reflection = NULL;
+	int x1, x2;
 
 	device = device_open(argc, argv);
 	benchmark = device_get_benchmark(argc, argv);
@@ -195,17 +227,29 @@ int main (int argc, char **argv)
 	for (n = 1; n < argc; n++) {
 		if (strncmp(argv[n], "--num-fish=", 11) == 0)
 			num_fish = atoi(argv[n]+11);
+		else if (strcmp(argv[n], "--reflection") == 0)
+			reflection = (void *)1;
 	}
 
-	bg = create_background(device);
+	bg = create_background(device, &x1, &x2);
 	if (cairo_pattern_status(bg))
 		return 1;
 
-	fish = malloc(sizeof(*fish)*num_fish);
-	for (n = 0; n < num_fish; n++)
-		fish_init(device, &fish[n]);
+	if (reflection == NULL) {
+		x1 = 0, x2 = device->width;
+	} else {
+		reflection = cairo_pattern_create_linear(0,0, device->width, 0);
+		cairo_pattern_add_color_stop_rgba(reflection, 0, 0, 0, 0, 0);
+		cairo_pattern_add_color_stop_rgba(reflection, x1/(double)device->width, 0, 0, 0, 1);
+		cairo_pattern_add_color_stop_rgba(reflection, x2/(double)device->width, 0, 0, 0, 1);
+		cairo_pattern_add_color_stop_rgba(reflection, 1, 0, 0, 0, 0);
+	}
 
 	strip = create_strip(device);
+
+	fish = malloc(sizeof(*fish)*num_fish);
+	for (n = 0; n < num_fish; n++)
+		fish_init(device, &fish[n], x1, x2);
 
 	gettimeofday(&start, 0); now = last_tty = last_fps = start;
 	do {
@@ -214,10 +258,13 @@ int main (int argc, char **argv)
 
 		cr = cairo_create(fb->surface);
 		cairo_set_source(cr, bg);
-		cairo_paint(cr);
+		if (reflection)
+			cairo_mask(cr, reflection);
+		else
+			cairo_paint(cr);
 
 		for (n = 0; n < num_fish; n++)
-			fish_draw(device, cr, &fish[n], strip);
+			fish_draw(device, cr, &fish[n], reflection, x1, x2, strip);
 
 		cairo_destroy(cr);
 

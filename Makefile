@@ -61,6 +61,8 @@ tiger-demo: tiger-demo.c $(SOURCES) demo.h Makefile tiger.inc
 	$(CC) $(DEFINES) $(CFLAGS) -o $@ tiger-demo.c $(SOURCES) $(LIBS)
 fish-demo: fish-demo.c $(SOURCES) demo.h Makefile
 	$(CC) $(DEFINES) $(CFLAGS) -o $@ fish-demo.c $(SOURCES) $(LIBS)
+fish2-demo: fish2-demo.c $(SOURCES) demo.h Makefile
+	$(CC) $(DEFINES) $(CFLAGS) -o $@ fish2-demo.c $(SOURCES) $(LIBS)
 flowers-demo: flowers-demo.c $(SOURCES) demo.h Makefile
 	$(CC) $(DEFINES) $(CFLAGS) -o $@ flowers-demo.c $(SOURCES) $(LIBS)
 gears-demo: gears-demo.c $(SOURCES) demo.h Makefile
