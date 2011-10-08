@@ -228,6 +228,7 @@ int main (int argc, char **argv)
 	double delta;
 	int frame = 0;
 	int frames = 0;
+	int show_fps = 1;
 	int benchmark;
 	cairo_antialias_t antialias;
 
@@ -239,6 +240,13 @@ int main (int argc, char **argv)
 	benchmark = device_get_benchmark(argc, argv);
 	if (benchmark == 0)
 		benchmark = 20;
+	if (benchmark > 0)
+		show_fps = 0;
+
+	for (n = 1; n < argc; n++) {
+		if (strcmp (argv[n], "--hide-fps") == 0)
+			show_fps = 0;
+	}
 
 	for (n = 0; n < 5; n++)
 		chart_init(&c[n], (n+1)*device->height/6, device->height/15, 100,
@@ -269,7 +277,7 @@ int main (int argc, char **argv)
 			chart_update(&c[n]);
 
 		gettimeofday(&now, NULL);
-		if (benchmark < 0 && last_fps.tv_sec)
+		if (show_fps && last_fps.tv_sec)
 			fps_draw(fb, device->name, &last_fps, &now);
 		last_fps = now;
 
