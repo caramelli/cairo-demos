@@ -209,6 +209,8 @@ int main(int argc, char **argv)
 	struct timeval start, last_tty, last_fps, now;
 	int frames, n;
 	int show_fps = 1;
+	int transition = 1;
+	double divide = 1.;
 
 	device = device_open(argc, argv);
 
@@ -223,6 +225,8 @@ int main(int argc, char **argv)
 			preload = 0;
 		} else if (strcmp (argv[n], "--hide-fps") == 0) {
 			show_fps = 0;
+		} else if (strcmp (argv[n], "--no-transition") == 0) {
+			transition = 0;
 		}
 	}
 
@@ -246,22 +250,53 @@ int main(int argc, char **argv)
 	n = frames = 0;
 	do {
 		struct framebuffer *fb = device->get_framebuffer (device);
-		struct source *source = &sources[n++ % num_sources];
+		struct source *left = &sources[n % num_sources];
 		cairo_t *cr;
 		double delta;
 
 		cr = cairo_create (fb->surface);
 		cairo_set_operator(cr, CAIRO_OPERATOR_SOURCE);
 		cairo_scale(cr,
-			    device->width/(double)source->width,
-			    device->height/(double)source->height);
-		cairo_set_source_surface(cr, source->surface, 0, 0);
+			    device->width/(double)left->width,
+			    device->height/(double)left->height);
+		cairo_set_source_surface(cr, left->surface, 0, 0);
 		cairo_pattern_set_extend(cairo_get_source(cr),
 					 CAIRO_EXTEND_NONE);
 		cairo_pattern_set_filter(cairo_get_source(cr),
 					 CAIRO_FILTER_BILINEAR);
 		cairo_identity_matrix(cr);
 		cairo_paint(cr);
+
+		if (transition) {
+			struct source *right = &sources[(n + 1) % num_sources];
+			cairo_pattern_t *mask;
+
+			mask = cairo_pattern_create_linear(0, 0, device->width, device->height);
+			cairo_pattern_add_color_stop_rgba(mask, divide-.2, 0, 0, 0, 0);
+			cairo_pattern_add_color_stop_rgba(mask, divide, 0, 0, 0, 1);
+
+			cairo_set_operator(cr, CAIRO_OPERATOR_DEST_OUT);
+			cairo_set_source(cr, mask);
+			cairo_paint(cr);
+
+			cairo_set_operator(cr, CAIRO_OPERATOR_ADD);
+			cairo_scale(cr,
+				    device->width/(double)right->width,
+				    device->height/(double)right->height);
+			cairo_set_source_surface(cr, right->surface, 0, 0);
+			cairo_pattern_set_extend(cairo_get_source(cr),
+						 CAIRO_EXTEND_NONE);
+			cairo_pattern_set_filter(cairo_get_source(cr),
+						 CAIRO_FILTER_BILINEAR);
+			cairo_identity_matrix(cr);
+			cairo_mask(cr, mask);
+			cairo_pattern_destroy(mask);
+
+			divide -= 0.05;
+			if (divide < 0)
+				divide = 1., n++;
+		} else
+			n++;
 
 		gettimeofday(&now, NULL);
 		if (show_fps) {
