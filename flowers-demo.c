@@ -5,6 +5,7 @@
  */
 
 #include <stdint.h>
+#include <stdbool.h>
 #include <stdlib.h>
 #include <stdio.h>
 #include <string.h>
@@ -169,7 +170,7 @@ make_fast_flower (cairo_surface_t *target, flower_t *f, int w, int h)
 }
 
 static void
-fast_flowers_draw (cairo_t *cr)
+fast_flowers_draw (cairo_t *cr, bool opaque)
 {
     int i;
 
@@ -185,7 +186,10 @@ fast_flowers_draw (cairo_t *cr)
 	cairo_pattern_set_matrix (flowers[i].pattern, &m);
 
 	cairo_set_source (cr, flowers[i].pattern);
-	cairo_paint_with_alpha (cr, flowers[i].fade);
+	if (opaque)
+		cairo_paint (cr);
+	else
+		cairo_paint_with_alpha (cr, flowers[i].fade);
     }
 }
 
@@ -233,7 +237,7 @@ make_naive_flower (cairo_surface_t *target, flower_t *f, int w, int h)
 }
 
 static void
-naive_flowers_draw (cairo_t *cr)
+naive_flowers_draw (cairo_t *cr, bool opaque)
 {
     int i, j, n;
 
@@ -241,14 +245,20 @@ naive_flowers_draw (cairo_t *cr)
 	flower_t *f = &flowers[n];
 	cairo_matrix_t m;
 
-	cairo_rectangle (cr, 0, 0, f->size, f->size);
-	cairo_clip (cr);
-	cairo_push_group (cr); {
-	    cairo_reset_clip (cr);
-	    cairo_translate (cr, f->size/2., f->size/2.);
-	    cairo_rotate (cr, f->rot);
+	if (! opaque) {
+		cairo_rectangle (cr, 0, 0, f->size, f->size);
+		cairo_clip (cr);
+		cairo_push_group (cr);
 
-	    for (i = 0; i < f->n_groups; i++) {
+		cairo_reset_clip (cr);
+	} else {
+		cairo_save (cr);
+		cairo_translate (cr, f->x, f->y);
+	}
+	cairo_translate (cr, f->size/2., f->size/2.);
+	cairo_rotate (cr, f->rot);
+
+	for (i = 0; i < f->n_groups; i++) {
 		int n_petals = f->n_petals[i];
 		cairo_save (cr);
 
@@ -260,19 +270,19 @@ naive_flowers_draw (cairo_t *cr)
 				       0.5);
 
 		for (j = 0; j < n_petals; j++) {
-		    /* Petals are made up beziers */
-		    cairo_move_to (cr, 0, 0);
-		    cairo_rel_curve_to (cr,
-					f->petal_size[i], f->petal_size[i],
-					(f->pm2[i]+2)*f->petal_size[i], f->petal_size[i],
-					2*f->petal_size[i] + f->pm1[i], 0);
-		    cairo_rel_curve_to (cr,
-					0 + (f->pm2[i]*f->petal_size[i]), -f->petal_size[i],
-					-f->petal_size[i], -f->petal_size[i],
-					-(2*f->petal_size[i] + f->pm1[i]), 0);
-		    cairo_close_path (cr);
+			/* Petals are made up beziers */
+			cairo_move_to (cr, 0, 0);
+			cairo_rel_curve_to (cr,
+					    f->petal_size[i], f->petal_size[i],
+					    (f->pm2[i]+2)*f->petal_size[i], f->petal_size[i],
+					    2*f->petal_size[i] + f->pm1[i], 0);
+			cairo_rel_curve_to (cr,
+					    0 + (f->pm2[i]*f->petal_size[i]), -f->petal_size[i],
+					    -f->petal_size[i], -f->petal_size[i],
+					    -(2*f->petal_size[i] + f->pm1[i]), 0);
+			cairo_close_path (cr);
 
-		    cairo_rotate (cr, 2*M_PI / n_petals);
+			cairo_rotate (cr, 2*M_PI / n_petals);
 		}
 		cairo_fill_preserve (cr);
 
@@ -284,19 +294,19 @@ naive_flowers_draw (cairo_t *cr)
 		cairo_stroke (cr);
 
 		cairo_restore (cr);
-	    }
+	}
 
-	    /* Finally draw flower center */
-	    cairo_set_source_rgba (cr,
-				   colors[f->color[i]].red,
-				   colors[f->color[i]].green,
-				   colors[f->color[i]].blue,
-				   0.5);
+	/* Finally draw flower center */
+	cairo_set_source_rgba (cr,
+			       colors[f->color[i]].red,
+			       colors[f->color[i]].green,
+			       colors[f->color[i]].blue,
+			       0.5);
 
-	    cairo_arc (cr, 0, 0, f->petal_size[i], 0, M_PI * 2);
-	    cairo_fill (cr);
+	cairo_arc (cr, 0, 0, f->petal_size[i], 0, M_PI * 2);
+	cairo_fill (cr);
 
-	    if (f->petal_size[i] > 4) {
+	if (f->petal_size[i] > 4) {
 		cairo_arc (cr, 0, 0, f->petal_size[i] - 2, 0, M_PI * 2);
 		cairo_set_line_width (cr, 2.);
 		cairo_set_source_rgba (cr,
@@ -305,13 +315,16 @@ naive_flowers_draw (cairo_t *cr)
 				       colors[f->color[i]].blue,
 				       .75);
 		cairo_stroke (cr);
-	    }
-	} cairo_pop_group_to_source(cr);
-	cairo_reset_clip (cr);
+	}
+	if (! opaque) {
+		cairo_pop_group_to_source(cr);
+		cairo_reset_clip (cr);
 
-	cairo_matrix_init_translate (&m, -f->x, -f->y);
-	cairo_pattern_set_matrix (cairo_get_source(cr), &m);
-	cairo_paint_with_alpha (cr, f->fade);
+		cairo_matrix_init_translate (&m, -f->x, -f->y);
+		cairo_pattern_set_matrix (cairo_get_source(cr), &m);
+		cairo_paint_with_alpha (cr, f->fade);
+	} else
+		cairo_restore (cr);
     }
 }
 
@@ -388,8 +401,8 @@ int main (int argc, char **argv)
 	int frame = 0;
 	int frames = 0;
 	int benchmark;
-	void (*draw) (cairo_t *);
-	int naive;
+	void (*draw) (cairo_t *, bool);
+	int naive, opaque;
 	int i;
 
 	device = device_open(argc, argv);
@@ -397,10 +410,12 @@ int main (int argc, char **argv)
 	if (benchmark == 0)
 		benchmark = 20;
 
-	naive = 0;
+	naive = opaque = 0;
 	for (i = 1; i < argc; i++) {
 		if (strcmp(argv[i], "--naive") == 0)
 			naive = 1;
+		else if (strcmp(argv[i], "--opaque") == 0)
+			opaque = 1;
 	}
 
 
@@ -422,7 +437,7 @@ int main (int argc, char **argv)
 		cairo_paint (cr);
 		cairo_set_operator (cr, CAIRO_OPERATOR_OVER);
 
-		draw(cr);
+		draw(cr, opaque);
 
 		cairo_destroy(cr);
 
