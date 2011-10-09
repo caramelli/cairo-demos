@@ -33,11 +33,6 @@
 
 #include "demo.h"
 
-#define NUMPTS 6
-
-static double animpts[NUMPTS * 2];
-static double deltas[NUMPTS * 2];
-
 static void
 gear(cairo_t *cr,
      double inner_radius,
@@ -79,26 +74,6 @@ gear(cairo_t *cr,
 	cairo_arc_negative(cr, 0, 0, r0, 2*M_PI, 0);
 }
 
-static void
-gears_setup(cairo_surface_t *target, int w, int h)
-{
-	int i;
-
-	//cairo_scale (cr, 3.0, 1.0);
-
-	for (i = 0; i < (NUMPTS * 2); i += 2) {
-		animpts[i + 0] = (float) (drand48 () * w);
-		animpts[i + 1] = (float) (drand48 () * h);
-		deltas[i + 0] = (float) (drand48 () * 6.0 + 4.0);
-		deltas[i + 1] = (float) (drand48 () * 6.0 + 4.0);
-
-		if (animpts[i + 0] > w / 2.0)
-			deltas[i + 0] = -deltas[i + 0];
-		if (animpts[i + 1] > h / 2.0)
-			deltas[i + 1] = -deltas[i + 1];
-	}
-}
-
 static double gear1_rotation = 0.35;
 static double gear2_rotation = 0.33;
 static double gear3_rotation = 0.50;
@@ -106,16 +81,6 @@ static double gear3_rotation = 0.50;
 static void
 gears_render (cairo_t *cr, int w, int h)
 {
-	double *ctrlpts = animpts;
-	int len = (NUMPTS * 2);
-	double prevx = ctrlpts[len - 2];
-	double prevy = ctrlpts[len - 1];
-	double curx = ctrlpts[0];
-	double cury = ctrlpts[1];
-	double midx = (curx + prevx) / 2.0;
-	double midy = (cury + prevy) / 2.0;
-	int i;
-
 	cairo_set_source_rgba (cr, 0.75, 0.75, 0.75, 1.0);
 	cairo_set_line_width (cr, 1.0);
 
@@ -163,30 +128,6 @@ gears_render (cairo_t *cr, int w, int h)
 	gear1_rotation += 0.01;
 	gear2_rotation -= (0.01 * (20.0 / 12.0));
 	gear3_rotation -= (0.01 * (20.0 / 14.0));
-
-	cairo_new_path (cr);
-	cairo_move_to (cr, midx, midy);
-
-	for (i = 2; i <= (NUMPTS * 2); i += 2) {
-		double x2, x1 = (midx + curx) / 2.0;
-		double y2, y1 = (midy + cury) / 2.0;
-
-		prevx = curx;
-		prevy = cury;
-		if (i < (NUMPTS * 2)) {
-			curx = ctrlpts[i + 0];
-			cury = ctrlpts[i + 1];
-		} else {
-			curx = ctrlpts[0];
-			cury = ctrlpts[1];
-		}
-		midx = (curx + prevx) / 2.0;
-		midy = (cury + prevy) / 2.0;
-		x2 = (prevx + midx) / 2.0;
-		y2 = (prevy + midy) / 2.0;
-		cairo_curve_to (cr, x1, y1, x2, y2, midx, midy);
-	}
-	cairo_close_path (cr);
 }
 
 int main (int argc, char **argv)
@@ -198,13 +139,20 @@ int main (int argc, char **argv)
 	int frame = 0;
 	int frames = 0;
 	int benchmark;
+	int show_fps = 1;
+	int n;
 
 	device = device_open(argc, argv);
 	benchmark = device_get_benchmark(argc, argv);
 	if (benchmark == 0)
 		benchmark = 20;
+	if (benchmark > 0)
+		show_fps = 0;
 
-	gears_setup(device->scanout, device->width, device->height);
+	for (n = 1; n < argc; n++) {
+		if (strcmp (argv[n], "--hide-fps") == 0)
+			show_fps = 0;
+	}
 
 	gettimeofday(&start, 0); now = last_tty = last_fps = start;
 	do {
@@ -221,7 +169,7 @@ int main (int argc, char **argv)
 		gears_render(cr, device->width, device->height);
 
 		gettimeofday(&now, NULL);
-		if (benchmark < 0 && last_fps.tv_sec)
+		if (show_fps && last_fps.tv_sec)
 			fps_draw(cr, device->name, &last_fps, &now);
 		last_fps = now;
 
