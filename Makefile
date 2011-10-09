@@ -29,7 +29,7 @@ else
 DEFINES+=-DHAVE_GLX=0
 endif
 
-COGL:=$(shell pkg-config --exists cairo-gl && echo 1 || echo 0)
+COGL:=$(shell pkg-config --exists cairo-cogl && echo 1 || echo 0)
 ifneq ($(COGL),0)
 DEFINES+=-DHAVE_COGL=1
 SOURCES+=cogl.c
