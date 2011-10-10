@@ -26,7 +26,7 @@ static cairo_pattern_t *create_background(struct device *device, int *x1, int *x
 
 	height = cairo_image_surface_get_height(image);
 	width = cairo_image_surface_get_width(image);
-	sf = height/ (double)device->height;
+	sf = height / (double)device->height;
 
 	surface = cairo_surface_create_similar(device->scanout,
 					       CAIRO_CONTENT_COLOR,
@@ -40,12 +40,14 @@ static cairo_pattern_t *create_background(struct device *device, int *x1, int *x
 	pattern = cairo_pattern_create_for_surface(cairo_get_target(cr));
 	cairo_destroy (cr);
 
+	*x1 = (device->width - width / sf) / 2;
+	*x2 = device->width - *x1;
+
 	cairo_pattern_set_extend(pattern, CAIRO_EXTEND_REFLECT);
 	cairo_matrix_init_scale(&m, sf,sf);
+	cairo_matrix_translate(&m, -*x1, 0);
 	cairo_pattern_set_matrix(pattern, &m);
 
-	*x1 = (device->width - width * sf) / 2;
-	*x2 = device->width - *x1;
 	return pattern;
 }
 
@@ -95,7 +97,7 @@ static void fish_init(struct device *device, struct fish *f, int x1, int x2)
 	int w = x2 - x1;
 
 	f->x = random() % (w - fish_width) + x1;
-	f->y = random() % device->height;
+	f->y = random() % (device->height - fish_height);
 	f->z = 0;
 
 	f->dx = random() % 5 + 1;
@@ -189,13 +191,15 @@ int main (int argc, char **argv)
 	if (cairo_pattern_status(bg))
 		return 1;
 
-	if (reflection == NULL) {
+	if (reflection == NULL || x1 < 0) {
 		x1 = 0, x2 = device->width;
 	} else {
 		reflection = cairo_pattern_create_linear(0,0, device->width, 0);
 		cairo_pattern_add_color_stop_rgba(reflection, 0, 0, 0, 0, 0);
+		cairo_pattern_add_color_stop_rgba(reflection, x1/(double)device->width, 0, 0, 0, .75);
 		cairo_pattern_add_color_stop_rgba(reflection, x1/(double)device->width, 0, 0, 0, 1);
 		cairo_pattern_add_color_stop_rgba(reflection, x2/(double)device->width, 0, 0, 0, 1);
+		cairo_pattern_add_color_stop_rgba(reflection, x2/(double)device->width, 0, 0, 0, .75);
 		cairo_pattern_add_color_stop_rgba(reflection, 1, 0, 0, 0, 0);
 	}
 
