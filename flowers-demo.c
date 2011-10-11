@@ -96,12 +96,6 @@ make_fast_flower (cairo_surface_t *target, flower_t *f, int w, int h)
 	    idx = rand () % ARRAY_LENGTH (colors);
 	} while (idx == last_idx);
 
-	cairo_set_source_rgba (cr,
-			       colors[idx].red,
-			       colors[idx].green,
-			       colors[idx].blue,
-			       0.5);
-
 	last_idx = idx;
 
 	/* some bezier randomness */
@@ -123,6 +117,12 @@ make_fast_flower (cairo_surface_t *target, flower_t *f, int w, int h)
 
 	    cairo_rotate (cr, 2*M_PI / n_petals);
 	}
+	cairo_set_source_rgba (cr,
+			       colors[idx].red,
+			       colors[idx].green,
+			       colors[idx].blue,
+			       0.5);
+	cairo_set_antialias (cr, CAIRO_ANTIALIAS_NONE);
 	cairo_fill_preserve (cr);
 
 	cairo_set_line_width (cr, 1.);
@@ -130,6 +130,7 @@ make_fast_flower (cairo_surface_t *target, flower_t *f, int w, int h)
 			      colors[idx].red,
 			      colors[idx].green,
 			      colors[idx].blue);
+	cairo_set_antialias (cr, CAIRO_ANTIALIAS_DEFAULT);
 	cairo_stroke (cr);
 
 	petal_size -= rand () % (f->size/8);
