@@ -10,6 +10,8 @@
 struct xcb_device {
     struct device base;
 
+    struct framebuffer fb;
+
     xcb_connection_t *connection;
     xcb_window_t drawable;
 
@@ -17,28 +19,19 @@ struct xcb_device {
     int async;
 };
 
-struct xcb_framebuffer {
-    struct framebuffer base;
-};
-
 static void
-destroy (struct framebuffer *abstract_framebuffer)
+destroy (struct framebuffer *fb)
 {
-    struct xcb_framebuffer *fb = (struct xcb_framebuffer *) abstract_framebuffer;
-
-    cairo_surface_destroy (fb->base.surface);
-    free (fb);
 }
 
 static void
-show (struct framebuffer *abstract_framebuffer)
+show (struct framebuffer *fb)
 {
-    struct xcb_framebuffer *fb = (struct xcb_framebuffer *) abstract_framebuffer;
-    struct xcb_device *device = (struct xcb_device *) fb->base.device;
+    struct xcb_device *device = (struct xcb_device *) fb->device;
 
     if (device->double_buffered) {
 	cairo_t *cr = cairo_create (device->base.scanout);
-	cairo_set_source_surface (cr, fb->base.surface, 0, 0);
+	cairo_set_source_surface (cr, fb->surface, 0, 0);
 	cairo_paint (cr);
 	cairo_destroy (cr);
     }
@@ -61,23 +54,7 @@ static struct framebuffer *
 get_fb (struct device *abstract_device)
 {
     struct xcb_device *device = (struct xcb_device *) abstract_device;
-    struct xcb_framebuffer *fb;
-
-    fb = malloc (sizeof (struct xcb_framebuffer));
-    fb->base.device = &device->base;
-    fb->base.show = show;
-    fb->base.destroy = destroy;
-
-    if (device->double_buffered) {
-	fb->base.surface = cairo_surface_create_similar (device->base.scanout,
-							 CAIRO_CONTENT_COLOR,
-							 device->base.width,
-							 device->base.height);
-    } else {
-	fb->base.surface = cairo_surface_reference (device->base.scanout);
-    }
-
-    return &fb->base;
+    return &device->fb;
 }
 
 static xcb_visualtype_t *
@@ -149,6 +126,17 @@ xcb_open (int argc, char **argv)
 						     v,
 						     device->base.width,
 						     device->base.height);
+    if (device->double_buffered) {
+	device->fb.surface = cairo_surface_create_similar (device->base.scanout,
+							   CAIRO_CONTENT_COLOR,
+							   device->base.width,
+							   device->base.height);
+    } else {
+	device->fb.surface = cairo_surface_reference (device->base.scanout);
+    }
+    device->fb.device = &device->base;
+    device->fb.show = show;
+    device->fb.destroy = destroy;
 
     return &device->base;
 }
