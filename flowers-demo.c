@@ -247,6 +247,7 @@ naive_flowers_draw (cairo_t *cr, bool opaque)
 	cairo_matrix_t m;
 
 	if (! opaque) {
+		cairo_save (cr);
 		cairo_rectangle (cr, 0, 0, f->size, f->size);
 		cairo_clip (cr);
 		cairo_push_group (cr);
@@ -318,12 +319,13 @@ naive_flowers_draw (cairo_t *cr, bool opaque)
 		cairo_stroke (cr);
 	}
 	if (! opaque) {
-		cairo_pop_group_to_source(cr);
-		cairo_reset_clip (cr);
-
+		cairo_pattern_t *p = cairo_pop_group(cr);
+		cairo_restore (cr);
 		cairo_matrix_init_translate (&m, -f->x, -f->y);
-		cairo_pattern_set_matrix (cairo_get_source(cr), &m);
+		cairo_pattern_set_matrix (p, &m);
+		cairo_set_source (cr, p);
 		cairo_paint_with_alpha (cr, f->fade);
+		cairo_pattern_destroy (p);
 	} else
 		cairo_restore (cr);
     }
@@ -356,11 +358,13 @@ int main (int argc, char **argv)
 	int frame = 0;
 	int frames = 0;
 	int benchmark;
+	enum clip clip;
 	void (*draw) (cairo_t *, bool);
 	int naive, opaque;
 	int i;
 
 	device = device_open(argc, argv);
+	clip = device_get_clip(argc, argv);
 	benchmark = device_get_benchmark(argc, argv);
 	if (benchmark == 0)
 		benchmark = 20;
@@ -392,6 +396,7 @@ int main (int argc, char **argv)
 		cairo_paint (cr);
 		cairo_set_operator (cr, CAIRO_OPERATOR_OVER);
 
+		device_apply_clip (device, cr, clip);
 		draw(cr, opaque);
 
 		gettimeofday(&now, NULL);

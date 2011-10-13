@@ -31,6 +31,16 @@ struct device *device_open(int argc, char **argv);
 int device_get_size(int argc, char **argv, int *width, int *height);
 cairo_antialias_t device_get_antialias(int argc, char **argv);
 int device_get_benchmark(int argc, char **argv);
+enum clip {
+	CLIP_NONE,
+	CLIP_REGION1,
+	CLIP_BOX1,
+	CLIP_REGION2,
+	CLIP_BOX2,
+	CLIP_DIAMOND,
+	CLIP_CIRCLE,
+} device_get_clip(int argc, char **argv);
+void device_apply_clip(struct device *device, cairo_t *cr, enum clip c);
 
 #if HAVE_COGL
 struct device *cogl_open (int argc, char **argv);

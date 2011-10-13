@@ -1,6 +1,7 @@
 #include <string.h>
 #include <stdio.h>
 #include <stdlib.h>
+#include <math.h>
 
 #include "demo.h"
 
@@ -275,3 +276,86 @@ fps_draw (cairo_t *cr, const char *name,
     cairo_show_text (cr, buf);
 }
 
+#ifndef min
+#define min(a, b) ((a) <= (b) ? (a) : (b))
+#endif
+
+enum clip device_get_clip(int argc, char **argv)
+{
+	const char *clip = NULL;
+	enum clip c;
+	int n;
+
+	for (n = 1; n < argc; n++) {
+		if (strcmp (argv[n], "--clip") == 0 && n < argc - 1)
+			clip = argv[++n];
+		else if (strncmp (argv[n], "--clip=", 7) == 0)
+			clip = argv[n] + 7;
+	}
+
+	c = CLIP_NONE;
+	if (clip) {
+		if (strcmp (clip, "none") == 0) {
+		} else if (strcmp (clip, "region") == 0 || strcmp (clip, "region1") == 0) {
+			c = CLIP_REGION1;
+		} else if (strcmp (clip, "box") == 0 || strcmp (clip, "box1") == 0) {
+			c = CLIP_BOX1;
+		} else if (strcmp (clip, "region2") == 0) {
+			c = CLIP_REGION2;
+		} else if (strcmp (clip, "box2") == 0) {
+			c = CLIP_BOX2;
+		} else if (strcmp (clip, "diamond") == 0) {
+			c = CLIP_DIAMOND;
+		} else if (strcmp (clip, "circle") == 0) {
+			c = CLIP_CIRCLE;
+		}
+	}
+
+	return c;
+}
+
+void device_apply_clip(struct device *device, cairo_t *cr, enum clip c)
+{
+	cairo_new_path (cr);
+	switch (c) {
+	case CLIP_NONE:
+		return;
+	case CLIP_REGION1:
+		cairo_rectangle (cr,
+				 device->width/4, device->height/4,
+				 device->width/2, device->height/2);
+		break;
+	case CLIP_BOX1:
+		cairo_rectangle (cr,
+				 device->width/4+.25, device->height/4+.25,
+				 device->width/2, device->height/2);
+		break;
+	case CLIP_REGION2:
+		cairo_rectangle (cr,
+				 0, 0, 3*device->width/4, 3*device->height/4);
+		cairo_rectangle (cr,
+				 device->width/4, device->height/4,
+				 3*device->width/4, 3*device->height/4);
+		break;
+	case CLIP_BOX2:
+		cairo_rectangle (cr,
+				 0.25, 0.25, 3*device->width/4, 3*device->height/4);
+		cairo_rectangle (cr,
+				 device->width/4-.25, device->height/4-.25,
+				 3*device->width/4 + .25, 3*device->height/4 + .25);
+		break;
+	case CLIP_DIAMOND:
+		cairo_move_to (cr, device->width/2, 0);
+		cairo_line_to (cr, device->width, device->height/2);
+		cairo_line_to (cr, device->width/2, device->height);
+		cairo_line_to (cr, 0, device->height/2);
+		cairo_close_path (cr);
+		break;
+	case CLIP_CIRCLE:
+		cairo_arc (cr, device->width/2, device->height/2,
+			   min(device->width/2, device->height/2),
+			   0, 2 * M_PI);
+		break;
+	}
+	cairo_clip (cr);
+}

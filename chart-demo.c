@@ -185,12 +185,14 @@ int main (int argc, char **argv)
 	int show_fps = 1;
 	int benchmark;
 	cairo_antialias_t antialias;
+	enum clip clip;
 
 	struct chart c[5];
 	int n;
 
 	device = device_open(argc, argv);
 	antialias = device_get_antialias(argc, argv);
+	clip = device_get_clip(argc, argv);
 	benchmark = device_get_benchmark(argc, argv);
 	if (benchmark == 0)
 		benchmark = 20;
@@ -214,6 +216,7 @@ int main (int argc, char **argv)
 		cr = cairo_create(fb->surface);
 
 		bg_draw(device, cr);
+		device_apply_clip(device, cr, clip);
 
 		cairo_set_antialias (cr, CAIRO_ANTIALIAS_NONE);
 		for (n = 0; n < 5; n++)
@@ -226,8 +229,10 @@ int main (int argc, char **argv)
 			chart_stroke(device, cr, &c[n]);
 
 		gettimeofday(&now, NULL);
-		if (show_fps && last_fps.tv_sec)
+		if (show_fps && last_fps.tv_sec) {
+			cairo_reset_clip (cr);
 			fps_draw(cr, device->name, &last_fps, &now);
+		}
 		last_fps = now;
 
 		cairo_destroy(cr);

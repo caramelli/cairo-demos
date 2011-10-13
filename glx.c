@@ -3,6 +3,7 @@
 #include "demo.h"
 
 #include <stdlib.h>
+#include <string.h>
 #include <X11/X.h>
 
 struct glx_device {
@@ -13,6 +14,8 @@ struct glx_device {
     Window drawable;
     GLXContext ctx;
     cairo_device_t *device;
+
+    int double_buffered;
 };
 
 static void
@@ -23,7 +26,16 @@ destroy (struct framebuffer *fb)
 static void
 show (struct framebuffer *fb)
 {
-    cairo_gl_surface_swapbuffers (fb->surface);
+    struct glx_device *device = (struct glx_device *) fb->device;
+
+    if (device->double_buffered) {
+	cairo_t *cr = cairo_create (device->base.scanout);
+	cairo_set_source_surface (cr, fb->surface, 0, 0);
+	cairo_paint (cr);
+	cairo_destroy (cr);
+    }
+
+    cairo_gl_surface_swapbuffers (device->base.scanout);
 }
 
 static struct framebuffer *
@@ -51,6 +63,7 @@ glx_open (int argc, char **argv)
 	Screen *scr;
 	int screen;
 	XSetWindowAttributes attr;
+	int i;
 
 	dpy = XOpenDisplay (NULL);
 	if (dpy == NULL)
@@ -64,6 +77,13 @@ glx_open (int argc, char **argv)
 	device->fb.device = &device->base;
 	device->fb.show = show;
 	device->fb.destroy = destroy;
+
+	device->double_buffered = 0;
+	for (i = 1; i < argc; i++) {
+		if (strcmp (argv[i], "--double") == 0)
+			device->double_buffered = 1;
+	}
+
 
 	screen = DefaultScreen (dpy);
 	scr = XScreenOfDisplay (dpy, screen);
@@ -104,7 +124,14 @@ glx_open (int argc, char **argv)
 						    device->drawable,
 						    device->base.width,
 						    device->base.height);
+    if (device->double_buffered) {
+	device->fb.surface = cairo_surface_create_similar (device->base.scanout,
+							   CAIRO_CONTENT_COLOR,
+							   device->base.width,
+							   device->base.height);
+    } else {
 	device->fb.surface = device->base.scanout;
+    }
 
 	return &device->base;
 }

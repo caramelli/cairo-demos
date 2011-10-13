@@ -24,6 +24,7 @@
 static void tiger(struct device *device,
 		  struct framebuffer *fb,
 		  cairo_antialias_t antialias,
+		  enum clip c,
 		  double scale,
 		  double rotation)
 {
@@ -38,6 +39,8 @@ static void tiger(struct device *device,
 	cairo_set_source_rgba (cr, 0.1, 0.2, 0.3, 1.0);
 	cairo_paint (cr);
 	cairo_set_operator (cr, CAIRO_OPERATOR_OVER);
+
+	device_apply_clip (device, cr, c);
 
 	cairo_translate (cr, device->width/2, device->height/2);
 	cairo_translate (cr, 32, 30);
@@ -77,6 +80,7 @@ int main (int argc, char **argv)
 	struct timeval start, last_tty, last_fps, now;
 
 	cairo_antialias_t antialias;
+	enum clip clip;
 
 	double scale = 0.1;
 	double factor = 1.05;
@@ -89,6 +93,7 @@ int main (int argc, char **argv)
 
 	device = device_open(argc, argv);
 	antialias = device_get_antialias(argc, argv);
+	clip = device_get_clip(argc, argv);
 	benchmark = device_get_benchmark(argc, argv);
 	if (benchmark == 0)
 		benchmark = 20;
@@ -97,7 +102,7 @@ int main (int argc, char **argv)
 	do {
 		struct framebuffer *fb = device->get_framebuffer (device);
 
-		tiger (device, fb, antialias, scale, rotation);
+		tiger (device, fb, antialias, clip, scale, rotation);
 
 		gettimeofday(&now, NULL);
 		if (benchmark < 0 && last_fps.tv_sec) {
