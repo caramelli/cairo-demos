@@ -230,8 +230,10 @@ int main (int argc, char **argv)
 			fish_draw(device, cr, &fish[n], reflection, x1, x2, strip);
 
 		gettimeofday(&now, NULL);
-		if (benchmark < 0 && last_fps.tv_sec)
+		if (benchmark < 0 && last_fps.tv_sec) {
+			cairo_reset_clip (cr);
 			fps_draw(cr, device->name, &last_fps, &now);
+		}
 		last_fps = now;
 
 		cairo_destroy(cr);
