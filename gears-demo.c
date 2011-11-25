@@ -78,6 +78,10 @@ static double gear1_rotation = 0.35;
 static double gear2_rotation = 0.33;
 static double gear3_rotation = 0.50;
 
+static cairo_pattern_t *gear1_sprite;
+static cairo_pattern_t *gear2_sprite;
+static cairo_pattern_t *gear3_sprite;
+
 static void
 gears_render (cairo_t *cr, int w, int h)
 {
@@ -90,37 +94,55 @@ gears_render (cairo_t *cr, int w, int h)
 	cairo_save (cr);
 	cairo_translate (cr, 170.0, 330.0);
 	cairo_rotate (cr, gear1_rotation);
-	gear (cr, 30.0, 120.0, 20, 20.0);
-	cairo_set_source_rgb (cr, 0.75, 0.45, 0.45);
-	cairo_set_antialias (cr, CAIRO_ANTIALIAS_NONE);
-	cairo_fill_preserve (cr);
-	cairo_set_source_rgb (cr, 0.25, 0.15, 0.15);
-	cairo_set_antialias (cr, CAIRO_ANTIALIAS_DEFAULT);
-	cairo_stroke (cr);
+	if (gear1_sprite) {
+		cairo_translate (cr, -140, -140);
+		cairo_set_source (cr, gear1_sprite);
+		cairo_paint (cr);
+	} else {
+		gear (cr, 30.0, 120.0, 20, 20.0);
+		cairo_set_source_rgb (cr, 0.75, 0.45, 0.45);
+		cairo_set_antialias (cr, CAIRO_ANTIALIAS_NONE);
+		cairo_fill_preserve (cr);
+		cairo_set_source_rgb (cr, 0.25, 0.15, 0.15);
+		cairo_set_antialias (cr, CAIRO_ANTIALIAS_DEFAULT);
+		cairo_stroke (cr);
+	}
 	cairo_restore (cr);
 
 	cairo_save (cr);
 	cairo_translate (cr, 369.0, 330.0);
 	cairo_rotate (cr, gear2_rotation);
-	gear (cr, 15.0, 75.0, 12, 20.0);
-	cairo_set_source_rgb (cr, 0.45, 0.75, 0.45);
-	cairo_set_antialias (cr, CAIRO_ANTIALIAS_NONE);
-	cairo_fill_preserve (cr);
-	cairo_set_source_rgb (cr, 0.15, 0.25, 0.15);
-	cairo_set_antialias (cr, CAIRO_ANTIALIAS_DEFAULT);
-	cairo_stroke (cr);
+	if (gear2_sprite) {
+		cairo_translate (cr, -95, -95);
+		cairo_set_source (cr, gear2_sprite);
+		cairo_paint (cr);
+	} else {
+		gear (cr, 15.0, 75.0, 12, 20.0);
+		cairo_set_source_rgb (cr, 0.45, 0.75, 0.45);
+		cairo_set_antialias (cr, CAIRO_ANTIALIAS_NONE);
+		cairo_fill_preserve (cr);
+		cairo_set_source_rgb (cr, 0.15, 0.25, 0.15);
+		cairo_set_antialias (cr, CAIRO_ANTIALIAS_DEFAULT);
+		cairo_stroke (cr);
+	}
 	cairo_restore (cr);
 
 	cairo_save (cr);
 	cairo_translate (cr, 170.0, 116.0);
 	cairo_rotate (cr, gear3_rotation);
-	gear (cr, 20.0, 90.0, 14, 20.0);
-	cairo_set_source_rgb (cr, 0.45, 0.45, 0.75);
-	cairo_set_antialias (cr, CAIRO_ANTIALIAS_NONE);
-	cairo_fill_preserve (cr);
-	cairo_set_antialias (cr, CAIRO_ANTIALIAS_DEFAULT);
-	cairo_set_source_rgb (cr, 0.15, 0.15, 0.25);
-	cairo_stroke (cr);
+	if (gear3_sprite) {
+		cairo_translate (cr, -100, -100);
+		cairo_set_source (cr, gear3_sprite);
+		cairo_paint (cr);
+	} else {
+		gear (cr, 20.0, 90.0, 14, 20.0);
+		cairo_set_source_rgb (cr, 0.45, 0.45, 0.75);
+		cairo_set_antialias (cr, CAIRO_ANTIALIAS_NONE);
+		cairo_fill_preserve (cr);
+		cairo_set_antialias (cr, CAIRO_ANTIALIAS_DEFAULT);
+		cairo_set_source_rgb (cr, 0.15, 0.15, 0.25);
+		cairo_stroke (cr);
+	}
 	cairo_restore (cr);
 
 	cairo_restore (cr);
@@ -128,6 +150,61 @@ gears_render (cairo_t *cr, int w, int h)
 	gear1_rotation += 0.01;
 	gear2_rotation -= (0.01 * (20.0 / 12.0));
 	gear3_rotation -= (0.01 * (20.0 / 14.0));
+}
+
+static void create_sprites (struct device *device)
+{
+	struct framebuffer *fb = device->get_framebuffer (device);
+	cairo_surface_t *surface;
+	cairo_t *cr;
+
+	surface = cairo_surface_create_similar (fb->surface,
+						CAIRO_CONTENT_COLOR_ALPHA,
+						280, 280);
+	cr = cairo_create (surface);
+	cairo_translate (cr, 140, 140);
+	gear (cr, 30.0, 120.0, 20, 20.0);
+	cairo_set_source_rgb (cr, 0.75, 0.45, 0.45);
+	cairo_set_antialias (cr, CAIRO_ANTIALIAS_NONE);
+	cairo_fill_preserve (cr);
+	cairo_set_source_rgb (cr, 0.25, 0.15, 0.15);
+	cairo_set_antialias (cr, CAIRO_ANTIALIAS_DEFAULT);
+	cairo_stroke (cr);
+	cairo_destroy (cr);
+	gear1_sprite = cairo_pattern_create_for_surface (surface);
+	cairo_surface_destroy (surface);
+
+	surface = cairo_surface_create_similar (fb->surface,
+						CAIRO_CONTENT_COLOR_ALPHA,
+						190, 190);
+	cr = cairo_create (surface);
+	cairo_translate (cr, 95, 95);
+	gear (cr, 15.0, 75.0, 12, 20.0);
+	cairo_set_source_rgb (cr, 0.45, 0.75, 0.45);
+	cairo_set_antialias (cr, CAIRO_ANTIALIAS_NONE);
+	cairo_fill_preserve (cr);
+	cairo_set_source_rgb (cr, 0.15, 0.25, 0.15);
+	cairo_set_antialias (cr, CAIRO_ANTIALIAS_DEFAULT);
+	cairo_stroke (cr);
+	cairo_destroy (cr);
+	gear2_sprite = cairo_pattern_create_for_surface (surface);
+	cairo_surface_destroy (surface);
+
+	surface = cairo_surface_create_similar (fb->surface,
+						CAIRO_CONTENT_COLOR_ALPHA,
+						200, 200);
+	cr = cairo_create (surface);
+	cairo_translate (cr, 100, 100);
+	gear (cr, 20.0, 90.0, 14, 20.0);
+	cairo_set_source_rgb (cr, 0.45, 0.45, 0.75);
+	cairo_set_antialias (cr, CAIRO_ANTIALIAS_NONE);
+	cairo_fill_preserve (cr);
+	cairo_set_antialias (cr, CAIRO_ANTIALIAS_DEFAULT);
+	cairo_set_source_rgb (cr, 0.15, 0.15, 0.25);
+	cairo_stroke (cr);
+	cairo_destroy (cr);
+	gear3_sprite = cairo_pattern_create_for_surface (surface);
+	cairo_surface_destroy (surface);
 }
 
 int main (int argc, char **argv)
@@ -140,6 +217,7 @@ int main (int argc, char **argv)
 	int frames = 0;
 	int benchmark;
 	int show_fps = 1;
+	int use_sprites = 0;
 	int n;
 
 	device = device_open(argc, argv);
@@ -152,7 +230,12 @@ int main (int argc, char **argv)
 	for (n = 1; n < argc; n++) {
 		if (strcmp (argv[n], "--hide-fps") == 0)
 			show_fps = 0;
+		if (strcmp (argv[n], "--use-sprites") == 0)
+			use_sprites = 1;
 	}
+
+	if (use_sprites)
+		create_sprites (device);
 
 	gettimeofday(&start, 0); now = last_tty = last_fps = start;
 	do {
