@@ -257,7 +257,7 @@ int main (int argc, char **argv)
 			delta = now.tv_sec - start.tv_sec;
 			delta += (now.tv_usec - start.tv_usec)*1e-6;
 			if (delta > benchmark) {
-				printf("%.2f fps\n", frame / delta);
+				printf("fish: %.2f fps\n", frame / delta);
 				break;
 			}
 		}
