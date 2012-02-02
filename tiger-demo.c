@@ -85,10 +85,17 @@ static const char *antialias_to_string(cairo_antialias_t antialias)
 	}
 }
 
+static int done;
+static void signal_handler(int sig)
+{
+	done = sig;
+}
+
 int main (int argc, char **argv)
 {
 	struct device *device;
 	struct timeval start, last_tty, last_fps, now;
+	const char *version;
 
 	cairo_antialias_t antialias;
 	enum clip clip;
@@ -103,11 +110,14 @@ int main (int argc, char **argv)
 	int benchmark;
 
 	device = device_open(argc, argv);
+	version = device_show_version(argc, argv);
 	antialias = device_get_antialias(argc, argv);
 	clip = device_get_clip(argc, argv);
 	benchmark = device_get_benchmark(argc, argv);
 	if (benchmark == 0)
 		benchmark = 20;
+
+	signal(SIGHUP, signal_handler);
 
 	gettimeofday(&start, 0); now = last_tty = last_fps = start;
 	do {
@@ -118,7 +128,7 @@ int main (int argc, char **argv)
 		gettimeofday(&now, NULL);
 		if (benchmark < 0 && last_fps.tv_sec) {
 			cairo_t *cr = cairo_create (fb->surface);
-			fps_draw(cr, device->name, &last_fps, &now);
+			fps_draw(cr, device->name, version, &last_fps, &now);
 			cairo_destroy (cr);
 		}
 		last_fps = now;
@@ -130,7 +140,7 @@ int main (int argc, char **argv)
 		if (frame % 256 == 0)
 			factor = 1./factor;
 
-		if (benchmark < 0) {
+		if (benchmark < 0 && 0) {
 			delta = now.tv_sec - last_tty.tv_sec;
 			delta += (now.tv_usec - last_tty.tv_usec)*1e-6;
 			frames++;
@@ -154,7 +164,16 @@ int main (int argc, char **argv)
 
 		scale *= factor;
 		rotation += 0.1;
-	} while (1);
+	} while (!done);
+
+	if (benchmark < 0) {
+		struct framebuffer *fb = device->get_framebuffer (device);
+		tiger (device, fb, antialias, clip, 0.5, 0);
+		fps_finish(fb, device->name, version);
+		fb->show (fb);
+		fb->destroy (fb);
+		pause();
+	}
 
 	return 0;
 }

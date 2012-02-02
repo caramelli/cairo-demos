@@ -28,7 +28,20 @@ struct slide {
 };
 
 struct device *device_open(int argc, char **argv);
+const char *device_show_version(int argc, char **argv);
 int device_get_size(int argc, char **argv, int *width, int *height);
+enum split {
+	SPLIT_NONE = 0,
+	SPLIT_LEFT,
+	SPLIT_RIGHT,
+	SPLIT_TOP,
+	SPLIT_BOTTOM,
+	SPLIT_TOP_LEFT,
+	SPLIT_TOP_RIGHT,
+	SPLIT_BOTTOM_LEFT,
+	SPLIT_BOTTOM_RIGHT,
+} device_get_split(int argc, char **argv);
+
 cairo_antialias_t device_get_antialias(int argc, char **argv);
 int device_get_benchmark(int argc, char **argv);
 enum clip {
@@ -82,6 +95,10 @@ cairo_surface_t *
 _cairo_image_surface_create_from_pixbuf(const GdkPixbuf *pixbuf);
 
 void
-fps_draw (cairo_t *cr, const char *name,
+fps_draw (cairo_t *cr, const char *name, const char *version,
 	  const struct timeval *last,
 	  const struct timeval *now);
+void
+fps_finish (struct framebuffer *fb,
+	    const char *name,
+	    const char *version);

@@ -21,6 +21,7 @@ DEFINES+=-DHAVE_XCB=0
 endif
 
 GLX:=$(shell pkg-config --exists cairo-gl && echo 1 || echo 0)
+GLX:=0
 ifneq ($(GLX),0)
 DEFINES+=-DHAVE_GLX=1
 SOURCES+=glx.c

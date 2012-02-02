@@ -159,6 +159,12 @@ draw (cairo_t *cr, int w, int h)
 	cairo_stroke (cr);
 }
 
+static int done;
+static void signal_handler(int sig)
+{
+	done = sig;
+}
+
 int main (int argc, char **argv)
 {
 	struct device *device;
@@ -168,14 +174,19 @@ int main (int argc, char **argv)
 	int frame = 0;
 	int frames = 0;
 	int benchmark;
+	enum clip clip;
+	const char *version;
 
 	device = device_open(argc, argv);
+	version = device_show_version(argc, argv);
+	clip = device_get_clip(argc,argv);
 	benchmark = device_get_benchmark(argc, argv);
 	if (benchmark == 0)
 		benchmark = 20;
 
 	setup(device->scanout, device->width, device->height);
 
+	signal(SIGHUP, signal_handler);
 	gettimeofday(&start, 0); now = last_tty = last_fps = start;
 	do {
 		struct framebuffer *fb = device->get_framebuffer (device);
@@ -188,11 +199,14 @@ int main (int argc, char **argv)
 		cairo_paint (cr);
 		cairo_set_operator (cr, CAIRO_OPERATOR_OVER);
 
+		cairo_save(cr);
+		device_apply_clip(device, cr, clip);
 		draw(cr, device->width, device->height);
+		cairo_restore(cr);
 
 		gettimeofday(&now, NULL);
 		if (benchmark < 0 && last_fps.tv_sec)
-			fps_draw(cr, device->name, &last_fps, &now);
+			fps_draw(cr, device->name, version, &last_fps, &now);
 		last_fps = now;
 
 		cairo_destroy(cr);
@@ -200,7 +214,7 @@ int main (int argc, char **argv)
 		fb->show (fb);
 		fb->destroy (fb);
 
-		if (benchmark < 0) {
+		if (benchmark < 0 && 0) {
 			delta = now.tv_sec - last_tty.tv_sec;
 			delta += (now.tv_usec - last_tty.tv_usec)*1e-6;
 			frames++;
@@ -220,7 +234,26 @@ int main (int argc, char **argv)
 				break;
 			}
 		}
-	} while (1);
+	} while (!done);
+
+	if (benchmark < 0) {
+		struct framebuffer *fb = device->get_framebuffer (device);
+		cairo_t *cr = cairo_create(fb->surface);
+
+		cairo_set_source_rgb (cr, 1.0, 1.0, 1.0);
+		cairo_set_operator (cr, CAIRO_OPERATOR_SOURCE);
+		cairo_paint (cr);
+		cairo_set_operator (cr, CAIRO_OPERATOR_OVER);
+
+		device_apply_clip(device, cr, clip);
+		draw(cr, device->width, device->height);
+		cairo_destroy(cr);
+
+		fps_finish(fb, device->name, version);
+		fb->show (fb);
+		fb->destroy (fb);
+		pause();
+	}
 
 	return 0;
 }

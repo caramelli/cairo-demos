@@ -159,6 +159,7 @@ static void load_sources(const char *path,
 {
 	struct stat st;
 
+			printf("opening %s\n", path);
 	if (stat(path, &st))
 		return;
 
@@ -168,14 +169,24 @@ static void load_sources(const char *path,
 		load_sources_file(path, device, target);
 }
 
+static int done;
+static void signal_handler(int sig)
+{
+	done = sig;
+}
+
 int main(int argc, char **argv)
 {
 	struct device *device;
 	struct timeval start, last_tty, last_fps, now;
 	int frames, n;
 	int show_fps = 1;
+	const char *version;
 
 	device = device_open(argc, argv);
+	version = device_show_version(argc, argv);
+
+	signal(SIGHUP, signal_handler);
 
 	g_type_init();
 
@@ -195,7 +206,9 @@ int main(int argc, char **argv)
 		if (strcmp (argv[n], "--images") == 0) {
 			load_sources(argv[++n], device,
 				     device->get_framebuffer(device)->surface);
-			n++;
+		} else if (strncmp (argv[n], "--images=", 9) == 0) {
+			load_sources(argv[n]+9, device,
+				     device->get_framebuffer(device)->surface);
 		}
 	}
 	if (num_sources == 0)
@@ -238,7 +251,8 @@ int main(int argc, char **argv)
 		gettimeofday(&now, NULL);
 		if (show_fps) {
 			if (last_fps.tv_sec)
-				fps_draw(cr, device->name, &last_fps, &now);
+				fps_draw(cr, device->name, version,
+					 &last_fps, &now);
 			last_fps = now;
 		}
 
@@ -247,15 +261,50 @@ int main(int argc, char **argv)
 		fb->show (fb);
 		fb->destroy (fb);
 
-		frames++;
-		delta = now.tv_sec - last_tty.tv_sec;
-		delta += (now.tv_usec - last_tty.tv_usec)*1e-6;
-		if (delta >  5) {
-			printf("%.2f fps\n", frames/delta);
-			last_tty = now;
-			frames = 0;
+		if (0) {
+			frames++;
+			delta = now.tv_sec - last_tty.tv_sec;
+			delta += (now.tv_usec - last_tty.tv_usec)*1e-6;
+			if (delta >  5) {
+				printf("%.2f fps\n", frames/delta);
+				last_tty = now;
+				frames = 0;
+			}
 		}
-	} while (1);
+	} while (!done);
+
+	if (benchmark < 0) {
+		struct framebuffer *fb = device->get_framebuffer (device);
+		struct source *source = &sources[0];
+		cairo_t *cr;
+		double delta;
+
+		if (source->height * device->width > source->width * device->height)
+			delta = device->width / (double)source->width;
+		else
+			delta = device->height / (double)source->height;
+
+		cr = cairo_create (fb->surface);
+		cairo_set_operator(cr, CAIRO_OPERATOR_SOURCE);
+		cairo_translate(cr, device->width/2, device->height/2);
+		cairo_rotate(cr, (n%360)*M_PI/180);
+		cairo_scale(cr, delta, delta);
+		cairo_translate(cr, -source->width/2, -source->height/2);
+		cairo_set_source_surface(cr, source->surface, 0, 0);
+		cairo_pattern_set_extend(cairo_get_source(cr),
+					 CAIRO_EXTEND_NONE);
+		cairo_pattern_set_filter(cairo_get_source(cr),
+					 CAIRO_FILTER_BILINEAR);
+		cairo_identity_matrix(cr);
+		cairo_paint(cr);
+
+		cairo_destroy(cr);
+
+		fps_finish(fb, device->name, version);
+		fb->show (fb);
+		fb->destroy (fb);
+		pause();
+	}
 
 	return 0;
 }

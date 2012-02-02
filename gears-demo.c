@@ -83,7 +83,7 @@ static cairo_pattern_t *gear2_sprite;
 static cairo_pattern_t *gear3_sprite;
 
 static void
-gears_render (cairo_t *cr, int w, int h)
+gears_render (cairo_t *cr, int w, int h, cairo_antialias_t antialias)
 {
 	cairo_set_source_rgba (cr, 0.75, 0.75, 0.75, 1.0);
 	cairo_set_line_width (cr, 1.0);
@@ -104,7 +104,7 @@ gears_render (cairo_t *cr, int w, int h)
 		cairo_set_antialias (cr, CAIRO_ANTIALIAS_NONE);
 		cairo_fill_preserve (cr);
 		cairo_set_source_rgb (cr, 0.25, 0.15, 0.15);
-		cairo_set_antialias (cr, CAIRO_ANTIALIAS_DEFAULT);
+		cairo_set_antialias (cr, antialias);
 		cairo_stroke (cr);
 	}
 	cairo_restore (cr);
@@ -122,7 +122,7 @@ gears_render (cairo_t *cr, int w, int h)
 		cairo_set_antialias (cr, CAIRO_ANTIALIAS_NONE);
 		cairo_fill_preserve (cr);
 		cairo_set_source_rgb (cr, 0.15, 0.25, 0.15);
-		cairo_set_antialias (cr, CAIRO_ANTIALIAS_DEFAULT);
+		cairo_set_antialias (cr, antialias);
 		cairo_stroke (cr);
 	}
 	cairo_restore (cr);
@@ -139,7 +139,7 @@ gears_render (cairo_t *cr, int w, int h)
 		cairo_set_source_rgb (cr, 0.45, 0.45, 0.75);
 		cairo_set_antialias (cr, CAIRO_ANTIALIAS_NONE);
 		cairo_fill_preserve (cr);
-		cairo_set_antialias (cr, CAIRO_ANTIALIAS_DEFAULT);
+		cairo_set_antialias (cr, antialias);
 		cairo_set_source_rgb (cr, 0.15, 0.15, 0.25);
 		cairo_stroke (cr);
 	}
@@ -152,7 +152,7 @@ gears_render (cairo_t *cr, int w, int h)
 	gear3_rotation -= (0.01 * (20.0 / 14.0));
 }
 
-static void create_sprites (struct device *device)
+static void create_sprites (struct device *device, cairo_antialias_t antialias)
 {
 	struct framebuffer *fb = device->get_framebuffer (device);
 	cairo_surface_t *surface;
@@ -168,7 +168,7 @@ static void create_sprites (struct device *device)
 	cairo_set_antialias (cr, CAIRO_ANTIALIAS_NONE);
 	cairo_fill_preserve (cr);
 	cairo_set_source_rgb (cr, 0.25, 0.15, 0.15);
-	cairo_set_antialias (cr, CAIRO_ANTIALIAS_DEFAULT);
+	cairo_set_antialias (cr, antialias);
 	cairo_stroke (cr);
 	cairo_destroy (cr);
 	gear1_sprite = cairo_pattern_create_for_surface (surface);
@@ -184,7 +184,7 @@ static void create_sprites (struct device *device)
 	cairo_set_antialias (cr, CAIRO_ANTIALIAS_NONE);
 	cairo_fill_preserve (cr);
 	cairo_set_source_rgb (cr, 0.15, 0.25, 0.15);
-	cairo_set_antialias (cr, CAIRO_ANTIALIAS_DEFAULT);
+	cairo_set_antialias (cr, antialias);
 	cairo_stroke (cr);
 	cairo_destroy (cr);
 	gear2_sprite = cairo_pattern_create_for_surface (surface);
@@ -199,12 +199,18 @@ static void create_sprites (struct device *device)
 	cairo_set_source_rgb (cr, 0.45, 0.45, 0.75);
 	cairo_set_antialias (cr, CAIRO_ANTIALIAS_NONE);
 	cairo_fill_preserve (cr);
-	cairo_set_antialias (cr, CAIRO_ANTIALIAS_DEFAULT);
+	cairo_set_antialias (cr, antialias);
 	cairo_set_source_rgb (cr, 0.15, 0.15, 0.25);
 	cairo_stroke (cr);
 	cairo_destroy (cr);
 	gear3_sprite = cairo_pattern_create_for_surface (surface);
 	cairo_surface_destroy (surface);
+}
+
+static int done;
+static void signal_handler(int sig)
+{
+	done = sig;
 }
 
 int main (int argc, char **argv)
@@ -215,17 +221,21 @@ int main (int argc, char **argv)
 	double delta;
 	int frame = 0;
 	int frames = 0;
+	const char *version = NULL;
 	int benchmark;
 	int show_fps = 1;
 	int use_sprites = 0;
+	cairo_antialias_t antialias;
 	int n;
 
 	device = device_open(argc, argv);
+	version = device_show_version(argc, argv);
 	benchmark = device_get_benchmark(argc, argv);
 	if (benchmark == 0)
 		benchmark = 20;
 	if (benchmark > 0)
 		show_fps = 0;
+	antialias = device_get_antialias(argc, argv);
 
 	for (n = 1; n < argc; n++) {
 		if (strcmp (argv[n], "--hide-fps") == 0)
@@ -235,7 +245,9 @@ int main (int argc, char **argv)
 	}
 
 	if (use_sprites)
-		create_sprites (device);
+		create_sprites (device, antialias);
+
+	signal(SIGHUP, signal_handler);
 
 	gettimeofday(&start, 0); now = last_tty = last_fps = start;
 	do {
@@ -249,11 +261,11 @@ int main (int argc, char **argv)
 		cairo_paint (cr);
 		cairo_set_operator (cr, CAIRO_OPERATOR_OVER);
 
-		gears_render(cr, device->width, device->height);
+		gears_render(cr, device->width, device->height, antialias);
 
 		gettimeofday(&now, NULL);
 		if (show_fps && last_fps.tv_sec)
-			fps_draw(cr, device->name, &last_fps, &now);
+			fps_draw(cr, device->name, version, &last_fps, &now);
 		last_fps = now;
 
 		cairo_destroy(cr);
@@ -281,7 +293,26 @@ int main (int argc, char **argv)
 				break;
 			}
 		}
-	} while (1);
+	} while (!done);
+
+	if (benchmark < 0) {
+		struct framebuffer *fb = device->get_framebuffer (device);
+		cairo_t *cr = cairo_create(fb->surface);
+
+		cairo_set_source_rgb (cr, 1.0, 1.0, 1.0);
+		cairo_set_operator (cr, CAIRO_OPERATOR_SOURCE);
+		cairo_paint (cr);
+		cairo_set_operator (cr, CAIRO_OPERATOR_OVER);
+
+		gears_render(cr, device->width, device->height, antialias);
+
+		cairo_destroy(cr);
+
+		fps_finish(fb, device->name, version);
+		fb->show (fb);
+		fb->destroy (fb);
+		pause ();
+	}
 
 	return 0;
 }

@@ -349,6 +349,12 @@ flowers_update (int width, int height)
     }
 }
 
+static int done;
+static void signal_handler(int sig)
+{
+	done = sig;
+}
+
 int main (int argc, char **argv)
 {
 	struct device *device;
@@ -358,16 +364,20 @@ int main (int argc, char **argv)
 	int frame = 0;
 	int frames = 0;
 	int benchmark;
+	const char *version = NULL;
 	enum clip clip;
 	void (*draw) (cairo_t *, bool);
 	int naive, opaque;
 	int i;
 
 	device = device_open(argc, argv);
+	version = device_show_version(argc, argv);
 	clip = device_get_clip(argc, argv);
 	benchmark = device_get_benchmark(argc, argv);
 	if (benchmark == 0)
 		benchmark = 20;
+
+	signal(SIGHUP, signal_handler);
 
 	naive = opaque = 0;
 	for (i = 1; i < argc; i++) {
@@ -401,7 +411,7 @@ int main (int argc, char **argv)
 
 		gettimeofday(&now, NULL);
 		if (benchmark < 0 && last_fps.tv_sec)
-			fps_draw(cr, device->name, &last_fps, &now);
+			fps_draw(cr, device->name, version, &last_fps, &now);
 		last_fps = now;
 
 		cairo_destroy(cr);
@@ -411,7 +421,7 @@ int main (int argc, char **argv)
 
 		flowers_update(device->width, device->height);
 
-		if (benchmark < 0) {
+		if (benchmark < 0 && 0) {
 			delta = now.tv_sec - last_tty.tv_sec;
 			delta += (now.tv_usec - last_tty.tv_usec)*1e-6;
 			frames++;
@@ -431,7 +441,26 @@ int main (int argc, char **argv)
 				break;
 			}
 		}
-	} while (1);
+	} while (!done);
+
+	if (benchmark < 0) {
+		struct framebuffer *fb = device->get_framebuffer (device);
+		cairo_t *cr = cairo_create(fb->surface);
+
+		cairo_set_operator (cr, CAIRO_OPERATOR_CLEAR);
+		cairo_paint (cr);
+		cairo_set_operator (cr, CAIRO_OPERATOR_OVER);
+
+		device_apply_clip (device, cr, clip);
+		draw(cr, opaque);
+
+		cairo_destroy(cr);
+
+		fps_finish(fb, device->name, version);
+		fb->show (fb);
+		fb->destroy (fb);
+		pause();
+	}
 
 	return 0;
 }

@@ -63,7 +63,7 @@ glx_open (int argc, char **argv)
 	Screen *scr;
 	int screen;
 	XSetWindowAttributes attr;
-	int i;
+	int i, x, y;
 
 	dpy = XOpenDisplay (NULL);
 	if (dpy == NULL)
@@ -91,6 +91,41 @@ glx_open (int argc, char **argv)
 	device->base.height = HeightOfScreen (scr);
 	device_get_size (argc, argv,
 			 &device->base.width, &device->base.height);
+	x = y = 0;
+	switch (device_get_split(argc, argv)) {
+	case SPLIT_NONE:
+		break;
+	case SPLIT_LEFT:
+		device->base.width /= 2;
+		break;
+	case SPLIT_RIGHT:
+		x = device->base.width /= 2;
+		break;
+	case SPLIT_TOP:
+		device->base.height /= 2;
+		break;
+	case SPLIT_BOTTOM:
+		y = device->base.height /= 2;
+		break;
+
+	case SPLIT_BOTTOM_LEFT:
+		device->base.width /= 2;
+		y = device->base.height /= 2;
+		break;
+	case SPLIT_BOTTOM_RIGHT:
+		x = device->base.width /= 2;
+		y = device->base.height /= 2;
+		break;
+
+	case SPLIT_TOP_LEFT:
+		device->base.width /= 2;
+		device->base.height /= 2;
+		break;
+	case SPLIT_TOP_RIGHT:
+		x = device->base.width /= 2;
+		device->base.height /= 2;
+		break;
+	}
 
 	vi = glXChooseVisual (dpy, DefaultScreen (dpy), rgba_attribs);
 	if (vi == NULL) {
@@ -107,7 +142,7 @@ glx_open (int argc, char **argv)
 	attr.border_pixel = 0;
 	attr.override_redirect = True;
 	device->drawable = XCreateWindow (dpy, DefaultRootWindow (dpy),
-					  0, 0,
+					  x, y,
 					  device->base.width, device->base.height, 0,
 					  vi->depth, InputOutput, vi->visual,
 					  CWOverrideRedirect | CWBorderPixel | CWColormap,

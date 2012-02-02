@@ -169,8 +169,10 @@ int main(int argc, char **argv)
 	int show_fps = 1;
 	int transition = 1;
 	double divide = 1.;
+	const char *version;
 
 	device = device_open(argc, argv);
+	version = device_show_version(argc, argv);
 
 	g_type_init();
 
@@ -251,7 +253,7 @@ int main(int argc, char **argv)
 		gettimeofday(&now, NULL);
 		if (show_fps) {
 			if (last_fps.tv_sec)
-				fps_draw(cr, device->name, &last_fps, &now);
+				fps_draw(cr, device->name, version, &last_fps, &now);
 			last_fps = now;
 		}
 

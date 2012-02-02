@@ -174,6 +174,33 @@ bg_draw (struct device *device, cairo_t *cr)
 	cairo_set_operator (cr, CAIRO_OPERATOR_OVER);
 }
 
+static void chart_draw(struct device *device,
+		       cairo_t *cr, cairo_antialias_t antialias, enum clip clip,
+		       struct chart *c, int count)
+{
+	int n;
+
+	bg_draw(device, cr);
+	device_apply_clip(device, cr, clip);
+
+	cairo_set_antialias (cr, CAIRO_ANTIALIAS_NONE);
+	for (n = 0; n < count; n++)
+		chart_fill(device, cr, &c[n], n + 1 < count ? &c[n+1] : NULL);
+	cairo_set_line_width (cr, 3);
+	cairo_set_line_join (cr, CAIRO_LINE_JOIN_ROUND);
+	cairo_set_antialias (cr, antialias);
+
+	for (n = 0; n < count; n++)
+		chart_stroke(device, cr, &c[n]);
+	cairo_reset_clip (cr);
+}
+
+static int done;
+static void signal_handler(int sig)
+{
+	done = sig;
+}
+
 int main (int argc, char **argv)
 {
 	struct device *device;
@@ -184,6 +211,7 @@ int main (int argc, char **argv)
 	int frames = 0;
 	int show_fps = 1;
 	int benchmark;
+	const char *version;
 	cairo_antialias_t antialias;
 	enum clip clip;
 
@@ -191,6 +219,7 @@ int main (int argc, char **argv)
 	int n;
 
 	device = device_open(argc, argv);
+	version = device_show_version(argc, argv);
 	antialias = device_get_antialias(argc, argv);
 	clip = device_get_clip(argc, argv);
 	benchmark = device_get_benchmark(argc, argv);
@@ -198,6 +227,8 @@ int main (int argc, char **argv)
 		benchmark = 20;
 	if (benchmark > 0)
 		show_fps = 0;
+
+	signal(SIGHUP, signal_handler);
 
 	for (n = 1; n < argc; n++) {
 		if (strcmp (argv[n], "--hide-fps") == 0)
@@ -211,27 +242,13 @@ int main (int argc, char **argv)
 	gettimeofday(&start, 0); now = last_tty = last_fps = start;
 	do {
 		struct framebuffer *fb = device->get_framebuffer (device);
-		cairo_t *cr;
+		cairo_t *cr = cairo_create(fb->surface);
 
-		cr = cairo_create(fb->surface);
-
-		bg_draw(device, cr);
-		device_apply_clip(device, cr, clip);
-
-		cairo_set_antialias (cr, CAIRO_ANTIALIAS_NONE);
-		for (n = 0; n < 5; n++)
-			chart_fill(device, cr, &c[n], n + 1 < 5 ? &c[n+1] : NULL);
-		cairo_set_line_width (cr, 3);
-		cairo_set_line_join (cr, CAIRO_LINE_JOIN_ROUND);
-		cairo_set_antialias (cr, antialias);
-
-		for (n = 0; n < 5; n++)
-			chart_stroke(device, cr, &c[n]);
+		chart_draw(device, cr, antialias, clip, c, 5);
 
 		gettimeofday(&now, NULL);
 		if (show_fps && last_fps.tv_sec) {
-			cairo_reset_clip (cr);
-			fps_draw(cr, device->name, &last_fps, &now);
+			fps_draw(cr, device->name, version, &last_fps, &now);
 		}
 		last_fps = now;
 
@@ -243,7 +260,7 @@ int main (int argc, char **argv)
 		for (n = 0; n < 5; n++)
 			chart_update(&c[n]);
 
-		if (benchmark < 0) {
+		if (benchmark < 0 && 0) {
 			delta = now.tv_sec - last_tty.tv_sec;
 			delta += (now.tv_usec - last_tty.tv_usec)*1e-6;
 			frames++;
@@ -263,7 +280,20 @@ int main (int argc, char **argv)
 				break;
 			}
 		}
-	} while (1);
+	} while (!done);
+
+	if (benchmark < 0) {
+		struct framebuffer *fb = device->get_framebuffer (device);
+		cairo_t *cr = cairo_create(fb->surface);
+
+		chart_draw(device, cr, antialias, clip, c, 5);
+		cairo_destroy(cr);
+
+		fps_finish(fb, device->name, version);
+		fb->show (fb);
+		fb->destroy (fb);
+		pause();
+	}
 
 	return 0;
 }

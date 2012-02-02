@@ -29,6 +29,48 @@ int device_get_size(int argc, char **argv, int *width, int *height)
 	return 0;
 }
 
+enum split device_get_split(int argc, char **argv)
+{
+	enum split split = SPLIT_NONE;
+	int n;
+
+	for (n = 1; n < argc; n++) {
+		if (strncmp (argv[n], "--split=", 8) == 0) {
+			if (strcmp(argv[n]+8, "left") == 0) {
+				split = SPLIT_LEFT;
+			} else if (strcmp(argv[n]+8, "right") == 0) {
+				split = SPLIT_RIGHT;
+			} else if (strcmp(argv[n]+8, "bottom") == 0) {
+				split = SPLIT_BOTTOM;
+			} else if (strcmp(argv[n]+8, "top") == 0) {
+				split = SPLIT_TOP;
+			} else if (strcmp(argv[n]+8, "top-left") == 0) {
+				split = SPLIT_TOP_LEFT;
+			} else if (strcmp(argv[n]+8, "top-right") == 0) {
+				split = SPLIT_TOP_RIGHT;
+			} else if (strcmp(argv[n]+8, "bottom-left") == 0) {
+				split = SPLIT_BOTTOM_LEFT;
+			} else if (strcmp(argv[n]+8, "bottom-right") == 0) {
+				split = SPLIT_BOTTOM_RIGHT;
+			}
+		}
+	}
+
+	return split;
+}
+
+const char *device_show_version(int argc, char **argv)
+{
+	int n;
+
+	for (n = 1; n < argc; n++) {
+		if (strcmp (argv[n], "--show-version") == 0)
+			return cairo_version_string();
+	}
+
+	return NULL;
+}
+
 int device_get_benchmark(int argc, char **argv)
 {
 	int n, count;
@@ -234,14 +276,18 @@ _cairo_image_surface_create_from_pixbuf(const GdkPixbuf *pixbuf)
 	return surface;
 }
 
+#define N_FILTER 25
+static double filter[N_FILTER];
+static double total_duration;
+static int frame_count;
+
 void
-fps_draw (cairo_t *cr, const char *name,
+fps_draw (cairo_t *cr,
+	  const char *name,
+	  const char *version,
 	  const struct timeval *last,
 	  const struct timeval *now)
 {
-#define N_FILTER 25
-    static double filter[25];
-    static int filter_pos;
     cairo_text_extents_t extents;
     char buf[80];
     double fps, avg;
@@ -249,19 +295,31 @@ fps_draw (cairo_t *cr, const char *name,
 
     fps = now->tv_sec - last->tv_sec;
     fps += (now->tv_usec - last->tv_usec) / 1000000.;
+    total_duration += fps;
 
     max = N_FILTER;
     avg = fps;
-    if (filter_pos < max)
-	max = filter_pos;
+    if (frame_count < max)
+	max = frame_count;
     for (n = 0; n < max; n++)
 	avg += filter[n];
     avg /= max + 1;
-    filter[filter_pos++ % N_FILTER] = fps;
-    if (filter_pos < 5)
-	    return;
-
-    snprintf (buf, sizeof (buf), "%s: %.1f fps", name, 1. / avg);
+    filter[frame_count++ % N_FILTER] = fps;
+    if (frame_count < 5) {
+	    if (version)
+		    snprintf (buf, sizeof (buf), "%s (%s): %d frame%s",
+			      name, version, frame_count, frame_count == 1 ? "" : "s");
+	    else
+		    snprintf (buf, sizeof (buf), "%s: %d frame%s",
+			      name, frame_count, frame_count == 1 ? "" : "s");
+    } else {
+	    if (version)
+		    snprintf (buf, sizeof (buf), "%s (%s): %.1f fps, %d frames",
+			      name, version, 1. / avg, frame_count);
+	    else
+		    snprintf (buf, sizeof (buf), "%s: %.1f fps, %d frames",
+			      name, 1. / avg, frame_count);
+    }
     cairo_set_font_size (cr, 18);
     cairo_text_extents (cr, buf, &extents);
 
@@ -274,6 +332,47 @@ fps_draw (cairo_t *cr, const char *name,
     cairo_move_to (cr, 4 - extents.x_bearing, 4 - extents.y_bearing);
     cairo_set_source_rgb (cr, .95, .95, .95);
     cairo_show_text (cr, buf);
+}
+
+void
+fps_finish (struct framebuffer *fb,
+	    const char *name,
+	    const char *version)
+{
+	cairo_t *cr = cairo_create(fb->surface);
+	cairo_text_extents_t extents;
+	char buf[80];
+	double avg;
+
+	if (frame_count == 0)
+		return;
+
+	avg = total_duration / frame_count;
+
+	if (version)
+		snprintf (buf, sizeof (buf), "%s (%s): %.1f fps, %d frames",
+			  name, version, 1. / avg, frame_count);
+	else
+		snprintf (buf, sizeof (buf), "%s: %.1f fps, %d frames",
+			  name, 1. / avg, frame_count);
+	cairo_set_font_size (cr, 32);
+	cairo_text_extents (cr, buf, &extents);
+
+	cairo_set_operator(cr, CAIRO_OPERATOR_OVER);
+
+	cairo_rectangle (cr,
+			 fb->device->width/2 - extents.width/2-4,
+			 fb->device->height/2 - extents.height/2-4,
+			 extents.width+8, extents.height+8);
+	cairo_set_source_rgba (cr, .0, .0, .0, .5);
+	cairo_fill (cr);
+
+	cairo_move_to (cr,
+		       fb->device->width/2 - extents.width/2,
+		       fb->device->height/2 - extents.height/2 - extents.y_bearing);
+	cairo_set_source_rgb (cr, .95, .95, .95);
+	cairo_show_text (cr, buf);
+	cairo_destroy (cr);
 }
 
 #ifndef min

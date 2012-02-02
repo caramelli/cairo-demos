@@ -158,6 +158,12 @@ static void fish_draw(struct device *device, cairo_t *cr, struct fish *f, cairo_
 		f->dy = -f->dy;
 }
 
+static int done;
+static void signal_handler(int sig)
+{
+	done = sig;
+}
+
 int main (int argc, char **argv)
 {
 	struct device *device;
@@ -172,15 +178,19 @@ int main (int argc, char **argv)
 	int frame = 0;
 	int frames = 0;
 	int benchmark;
+	const char *version;
 	enum clip clip;
 	cairo_pattern_t *reflection = NULL;
 	int x1, x2;
 
 	device = device_open(argc, argv);
+	version = device_show_version(argc, argv);
 	clip = device_get_clip(argc, argv);
 	benchmark = device_get_benchmark(argc, argv);
 	if (benchmark == 0)
 		benchmark = 20;
+
+	signal(SIGHUP, signal_handler);
 
 	for (n = 1; n < argc; n++) {
 		if (strncmp(argv[n], "--num-fish=", 11) == 0)
@@ -232,7 +242,7 @@ int main (int argc, char **argv)
 		gettimeofday(&now, NULL);
 		if (benchmark < 0 && last_fps.tv_sec) {
 			cairo_reset_clip (cr);
-			fps_draw(cr, device->name, &last_fps, &now);
+			fps_draw(cr, device->name, version, &last_fps, &now);
 		}
 		last_fps = now;
 
@@ -241,7 +251,7 @@ int main (int argc, char **argv)
 		fb->show (fb);
 		fb->destroy (fb);
 
-		if (benchmark < 0) {
+		if (benchmark < 0 && 0) {
 			delta = now.tv_sec - last_tty.tv_sec;
 			delta += (now.tv_usec - last_tty.tv_usec)*1e-6;
 			frames++;
@@ -261,7 +271,29 @@ int main (int argc, char **argv)
 				break;
 			}
 		}
-	} while (1);
+	} while (!done);
+
+	if (benchmark < 0) {
+		struct framebuffer *fb = device->get_framebuffer (device);
+		cairo_t *cr = cairo_create(fb->surface);
+
+		device_apply_clip(device, cr, clip);
+
+		cairo_set_source(cr, bg);
+		if (reflection)
+			cairo_mask(cr, reflection);
+		else
+			cairo_paint(cr);
+
+		for (n = 0; n < num_fish; n++)
+			fish_draw(device, cr, &fish[n], reflection, x1, x2, strip);
+		cairo_destroy(cr);
+
+		fps_finish(fb, device->name, version);
+		fb->show (fb);
+		fb->destroy (fb);
+		pause();
+	}
 
 	return 0;
 }

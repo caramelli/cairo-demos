@@ -287,7 +287,7 @@ int main(int argc, char **argv)
 
 		if (show_fps) {
 			if (last_fps.tv_sec)
-				fps_draw(cr, device->name, &last_fps, &now);
+				fps_draw(cr, device->name, NULL, &last_fps, &now);
 			last_fps = now;
 		}
 
