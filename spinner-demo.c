@@ -180,6 +180,9 @@ int main(int argc, char **argv)
 	struct device *device;
 	struct timeval start, last_tty, last_fps, now;
 	int frames, n;
+	int frame = 0;
+	double factor = 1.0125;
+	double zoom = 0.75;
 	int show_fps = 1;
 	const char *version;
 
@@ -228,11 +231,11 @@ int main(int argc, char **argv)
 		cairo_t *cr;
 		double delta;
 
-
 		if (source->height * device->width > source->width * device->height)
 			delta = device->width / (double)source->width;
 		else
 			delta = device->height / (double)source->height;
+		delta *= zoom;
 
 		cr = cairo_create (fb->surface);
 		cairo_set_operator(cr, CAIRO_OPERATOR_SOURCE);
@@ -247,6 +250,10 @@ int main(int argc, char **argv)
 					 CAIRO_FILTER_BILINEAR);
 		cairo_identity_matrix(cr);
 		cairo_paint(cr);
+
+		if (++frame % 512 == 0)
+			factor = 1./factor;
+		zoom *= factor;
 
 		gettimeofday(&now, NULL);
 		if (show_fps) {
