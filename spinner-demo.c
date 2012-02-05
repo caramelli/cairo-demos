@@ -185,9 +185,13 @@ int main(int argc, char **argv)
 	double zoom = 0.75;
 	int show_fps = 1;
 	const char *version;
+	int benchmark;
 
 	device = device_open(argc, argv);
 	version = device_show_version(argc, argv);
+	benchmark = device_get_benchmark(argc,argv);
+	if (benchmark == 0)
+		benchmark = 20;
 
 	signal(SIGHUP, signal_handler);
 
@@ -256,7 +260,7 @@ int main(int argc, char **argv)
 		zoom *= factor;
 
 		gettimeofday(&now, NULL);
-		if (show_fps) {
+		if (benchmark < 0 && show_fps) {
 			if (last_fps.tv_sec)
 				fps_draw(cr, device->name, version,
 					 &last_fps, &now);
@@ -276,6 +280,16 @@ int main(int argc, char **argv)
 				printf("%.2f fps\n", frames/delta);
 				last_tty = now;
 				frames = 0;
+			}
+		}
+
+		if (benchmark > 0) {
+			delta = now.tv_sec - start.tv_sec;
+			delta += (now.tv_usec - start.tv_usec)*1e-6;
+			if (delta > benchmark) {
+				printf("spinner: %.2f fps\n",
+				       frame / delta);
+				break;
 			}
 		}
 	} while (!done);
