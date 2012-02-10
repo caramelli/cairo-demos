@@ -19,19 +19,16 @@ static size_t in_pixels, out_pixels;
 int preload = 1;
 int prescale = 0;
 
-static int load_sources_file(const char *filename,
-			     struct device *device,
-			     cairo_surface_t *target)
+static int load_source(const char *filename, struct device *device)
 {
 	GdkPixbuf *pb;
-	cairo_surface_t *surface, *image;
+	cairo_surface_t *target, *surface, *image;
 	cairo_status_t status;
 	cairo_t *cr;
 	int width, height;
 	int ok = 0;
 
 	pb = gdk_pixbuf_new_from_file(filename, NULL);
-
 	if (pb == NULL)
 		return 0;
 
@@ -74,6 +71,7 @@ static int load_sources_file(const char *filename,
 		height *= delta;
 	}
 
+	target = device->get_framebuffer(device)->surface;
 	surface = cairo_surface_create_similar(preload ? target : image,
 					       CAIRO_CONTENT_COLOR,
 					       width, height);
@@ -113,62 +111,6 @@ static int load_sources_file(const char *filename,
 	return ok;
 }
 
-static void load_sources_dir(const char *path,
-			     struct device *device,
-			     cairo_surface_t *target)
-{
-	struct dirent *de;
-	DIR *dir;
-	int count = 0;
-
-	dir = opendir(path);
-	if (dir == NULL)
-		return;
-
-	while ((de = readdir(dir))) {
-		struct stat st;
-		gchar *filename;
-		if (de->d_name[0] == '.')
-			continue;
-
-		filename = g_build_filename(path, de->d_name, NULL);
-
-		if (stat(filename, &st)) {
-			g_free(filename);
-			continue;
-		}
-
-		if (S_ISDIR(st.st_mode)) {
-			load_sources_dir(filename, device, target);
-			g_free(filename);
-			continue;
-		}
-
-		count += load_sources_file(filename, device, target);
-		g_free(filename);
-	}
-	closedir(dir);
-
-	if (count)
-		printf("Loaded %d images from %s\n", count, path);
-}
-
-static void load_sources(const char *path,
-			 struct device *device,
-			 cairo_surface_t *target)
-{
-	struct stat st;
-
-			printf("opening %s\n", path);
-	if (stat(path, &st))
-		return;
-
-	if (S_ISDIR(st.st_mode))
-		load_sources_dir(path, device, target);
-	else
-		load_sources_file(path, device, target);
-}
-
 static int done;
 static void signal_handler(int sig)
 {
@@ -179,6 +121,7 @@ int main(int argc, char **argv)
 {
 	struct device *device;
 	struct timeval start, last_tty, last_fps, now;
+	const char *filename = "images/4000x4000/202672-4000x4000.jpg";
 	int frames, n;
 	int frame = 0;
 	double factor = 1.0125;
@@ -198,8 +141,10 @@ int main(int argc, char **argv)
 	g_type_init();
 
 	for (n = 1; n < argc; n++) {
-		if (strcmp (argv[n], "--images") == 0) {
-			n++;
+		if (strcmp (argv[n], "--image") == 0) {
+			filename = argv[++n];
+		} else if (strncmp (argv[n], "--image=", 8) == 0) {
+			filename = argv[n] + 8;
 		} else if (strcmp (argv[n], "--prescale") == 0) {
 			prescale = 1;
 		} else if (strcmp (argv[n], "--no-preload") == 0) {
@@ -209,23 +154,8 @@ int main(int argc, char **argv)
 		}
 	}
 
-	for (n = 1; n < argc; n++) {
-		if (strcmp (argv[n], "--images") == 0) {
-			load_sources(argv[++n], device,
-				     device->get_framebuffer(device)->surface);
-		} else if (strncmp (argv[n], "--images=", 9) == 0) {
-			load_sources(argv[n]+9, device,
-				     device->get_framebuffer(device)->surface);
-		}
-	}
-	if (num_sources == 0)
-		load_sources("/usr/share/backgrounds", device,
-			     device->get_framebuffer(device)->surface);
-
-	printf("Loaded %d images, %ld/%ld pixels in total\n",
-	       num_sources, (long)out_pixels, (long)in_pixels);
-	if (num_sources == 0)
-		return 0;
+	if (!load_source(filename, device))
+		return 1;
 
 	gettimeofday(&start, 0); now = last_tty = last_fps = start;
 	n = frames = 0;
