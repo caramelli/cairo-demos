@@ -75,17 +75,26 @@ static double tangent_at(struct chart *c, int n)
 static void chart_fill(struct device *device,
 		       cairo_t *cr,
 		       struct chart *top,
-		       struct chart *bottom)
+		       struct chart *bottom,
+		       int vertical)
 {
 	int n;
 
 	cairo_new_path (cr);
 
 	cairo_save (cr);
-	cairo_translate (cr, 0, top->y);
-	cairo_scale (cr,
-		     device->width / (top->size - 1.),
-		     top->scale / 128.);
+	if (vertical) {
+		cairo_translate (cr, top->y, 0);
+		cairo_scale (cr,
+			     top->scale / 128.,
+			     device->height / (top->size - 1.));
+		cairo_rotate (cr, M_PI/2);
+	} else {
+		cairo_translate (cr, 0, top->y);
+		cairo_scale (cr,
+			     device->width / (top->size - 1.),
+			     top->scale / 128.);
+	}
 	for (n = 0; n < top->size; n++){
 		cairo_curve_to(cr,
 			       n - 1./3, tangent_at(top, n - 1),
@@ -96,10 +105,18 @@ static void chart_fill(struct device *device,
 
 	if (bottom) {
 		cairo_save (cr);
-		cairo_translate (cr, 0, bottom->y);
-		cairo_scale (cr,
-			     device->width / (bottom->size - 1.),
-			     bottom->scale / 128.);
+		if (vertical) {
+			cairo_translate (cr, bottom->y, 0);
+			cairo_scale (cr,
+				     top->scale / 128.,
+				     device->height / (bottom->size - 1.));
+			cairo_rotate (cr, M_PI/2);
+		} else {
+			cairo_translate (cr, 0, bottom->y);
+			cairo_scale (cr,
+				     device->width / (bottom->size - 1.),
+				     bottom->scale / 128.);
+		}
 		for (n = bottom->size; n--; )
 			cairo_curve_to(cr,
 				       n + 2./3, tangent_at(bottom, n + 1),
@@ -108,7 +125,10 @@ static void chart_fill(struct device *device,
 		cairo_restore (cr);
 	} else {
 		cairo_line_to(cr, device->width, device->height);
-		cairo_line_to(cr, 0, device->height);
+		if (vertical)
+			cairo_line_to(cr, device->width, 0);
+		else
+			cairo_line_to(cr, 0, device->height);
 	}
 	cairo_close_path (cr);
 
@@ -119,17 +139,26 @@ static void chart_fill(struct device *device,
 
 static void chart_stroke(struct device *device,
 			 cairo_t *cr,
-			 struct chart *c)
+			 struct chart *c,
+			 int vertical)
 {
 	int n;
 
 	cairo_new_path (cr);
 
 	cairo_save (cr);
-	cairo_translate (cr, 0, c->y);
-	cairo_scale (cr,
-		     device->width / (c->size - 1.),
-		     c->scale / 128.);
+	if (vertical) {
+		cairo_translate (cr, c->y, 0);
+		cairo_scale (cr,
+			     c->scale / 128.,
+			     device->height / (c->size - 1.));
+		cairo_rotate (cr, M_PI/2);
+	} else {
+		cairo_translate (cr, 0, c->y);
+		cairo_scale (cr,
+			     device->width / (c->size - 1.),
+			     c->scale / 128.);
+	}
 	for (n = 0; n < c->size; n++){
 		cairo_curve_to(cr,
 			       n - 1./3, tangent_at(c, n - 1),
@@ -176,7 +205,7 @@ bg_draw (struct device *device, cairo_t *cr)
 
 static void chart_draw(struct device *device,
 		       cairo_t *cr, cairo_antialias_t antialias, enum clip clip,
-		       struct chart *c, int count)
+		       struct chart *c, int count, int vertical)
 {
 	int n;
 
@@ -185,13 +214,13 @@ static void chart_draw(struct device *device,
 
 	cairo_set_antialias (cr, CAIRO_ANTIALIAS_NONE);
 	for (n = 0; n < count; n++)
-		chart_fill(device, cr, &c[n], n + 1 < count ? &c[n+1] : NULL);
+		chart_fill(device, cr, &c[n], n + 1 < count ? &c[n+1] : NULL,vertical);
 	cairo_set_line_width (cr, 3);
 	cairo_set_line_join (cr, CAIRO_LINE_JOIN_ROUND);
 	cairo_set_antialias (cr, antialias);
 
 	for (n = 0; n < count; n++)
-		chart_stroke(device, cr, &c[n]);
+		chart_stroke(device, cr, &c[n], vertical);
 	cairo_reset_clip (cr);
 }
 
@@ -214,6 +243,7 @@ int main (int argc, char **argv)
 	const char *version;
 	cairo_antialias_t antialias;
 	enum clip clip;
+	int vertical = 0;
 
 	struct chart c[5];
 	int n;
@@ -233,6 +263,8 @@ int main (int argc, char **argv)
 	for (n = 1; n < argc; n++) {
 		if (strcmp (argv[n], "--hide-fps") == 0)
 			show_fps = 0;
+		if (strcmp (argv[n], "--vertical") == 0)
+			vertical = 1;
 	}
 
 	for (n = 0; n < 5; n++)
@@ -244,7 +276,7 @@ int main (int argc, char **argv)
 		struct framebuffer *fb = device->get_framebuffer (device);
 		cairo_t *cr = cairo_create(fb->surface);
 
-		chart_draw(device, cr, antialias, clip, c, 5);
+		chart_draw(device, cr, antialias, clip, c, 5, vertical);
 
 		gettimeofday(&now, NULL);
 		if (show_fps && last_fps.tv_sec) {
@@ -286,7 +318,7 @@ int main (int argc, char **argv)
 		struct framebuffer *fb = device->get_framebuffer (device);
 		cairo_t *cr = cairo_create(fb->surface);
 
-		chart_draw(device, cr, antialias, clip, c, 5);
+		chart_draw(device, cr, antialias, clip, c, 5, vertical);
 		cairo_destroy(cr);
 
 		fps_finish(fb, device->name, version);
