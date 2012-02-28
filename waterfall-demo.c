@@ -13,6 +13,7 @@ struct waterfall {
 	struct device *device;
 	struct list text;
 	enum clip clip;
+	int min_size, max_size;
 };
 
 struct text {
@@ -70,7 +71,7 @@ static void waterfall_draw(struct waterfall *w, cairo_t *cr)
 		t = malloc(sizeof (*t));
 		list_add_tail(&t->list, &w->text);
 		t->y = w->device->height;
-		t->size = 4;
+		t->size = w->min_size;
 		t->hue = 0;
 		hue_to_rgba(t->hue, t->rgba);
 	} else {
@@ -89,6 +90,10 @@ static void waterfall_draw(struct waterfall *w, cairo_t *cr)
 				tt->size = t->size + 1;
 			else
 				tt->size = 4;
+			if (tt->size < w->min_size)
+				tt->size = w->min_size;
+			if (tt->size > w->max_size)
+				tt->size = w->min_size;
 			tt->hue = t->hue + 1;
 			hue_to_rgba(tt->hue, tt->rgba);
 		}
@@ -119,6 +124,8 @@ int main (int argc, char **argv)
 
 	list_init(&waterfall.text);
 
+	waterfall.min_size = 6;
+	waterfall.max_size = 96;
 	waterfall.device = device_open(argc, argv);
 	version = device_show_version(argc, argv);
 	waterfall.clip = device_get_clip(argc, argv);
@@ -133,6 +140,13 @@ int main (int argc, char **argv)
 	for (n = 1; n < argc; n++) {
 		if (strcmp (argv[n], "--hide-fps") == 0)
 			show_fps = 0;
+		if (strncmp (argv[n], "--size=", 7) == 0) {
+			int min, max;
+			if (sscanf(argv[n]+7, "%d,%d", &min, &max) != 2)
+				max = min = atoi(argv[n]+7);
+			if (min != 0 && max >= min)
+				waterfall.min_size = min, waterfall.max_size = max;
+		}
 	}
 
 	gettimeofday(&start, 0); now = last_tty = last_fps = start;
