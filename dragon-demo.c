@@ -30,48 +30,26 @@
 #include <string.h>
 #include <sys/time.h>
 
-#ifndef MIN
-#define MIN(a,b) (((a) < (b)) ? (a) : (b))
-#endif
-
-#ifndef MAX
-#define MAX(a,b) (((a) > (b)) ? (a) : (b))
-#endif
-
-static inline int
-next_pot (int v)
-{
-	v--;
-	v |= v >> 1;
-	v |= v >> 2;
-	v |= v >> 4;
-	v |= v >> 8;
-	v |= v >> 16;
-	v++;
-	return v;
-}
-
 static cairo_bool_t
-direction (int i)
+direction (int i, int np2)
 {
-	int pivot, np2;
+	cairo_bool_t ret = TRUE;
 
-	if (i < 2)
-		return TRUE;
-
-	np2 = next_pot (i + 1);
-	if (np2 == i + 1)
-		return TRUE;
-
-	pivot = np2 / 2 - 1;
-	return ! direction (2 * pivot - i);
+	while (i >= 2 && i + 1 < np2) {
+		i = np2 - i - 2;
+		do
+			np2 >>= 1;
+		while (2*i < np2);
+		ret = !ret;
+	}
+	return ret;
 }
 
 static void
 path (cairo_t *cr, int step, int dir, int iterations)
 {
 	double dx, dy;
-	int i;
+	int i, np2;
 
 	switch (dir) {
 	default:
@@ -81,10 +59,11 @@ path (cairo_t *cr, int step, int dir, int iterations)
 	case 3: dx =  0; dy = -step; break;
 	}
 
+	np2 = 1;
 	for (i = 0; i < iterations; i++) {
 		cairo_rel_line_to (cr, dx, dy);
 
-		if (direction (i)) {
+		if (direction (i, np2)) {
 			double t = dx;
 			dx = dy;
 			dy = -t;
@@ -93,6 +72,9 @@ path (cairo_t *cr, int step, int dir, int iterations)
 			dx = -dy;
 			dy = t;
 		}
+
+		if (i + 1 == np2)
+			np2 <<= 1;
 	}
 }
 
