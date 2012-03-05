@@ -38,7 +38,7 @@ else
 DEFINES+=-DHAVE_COGL=0
 endif
 
-all: spinner-demo spiral-demo slideshow-demo tiger-demo fish-demo flowers-demo gears-demo gradient-demo chart-demo waterfall-demo dragon-demo
+all: spinner-demo spiral-demo slideshow-demo tiger-demo fish-demo flowers-demo gears-demo gradient-demo chart-demo waterfall-demo dragon-demo pythagoras-demo wave-demo
 
 ifeq ($(shell pkg-config --exists poppler-glib && echo 1), 1)
 all: poppler-demo
@@ -72,8 +72,12 @@ chart-demo: chart-demo.c $(SOURCES) demo.h Makefile
 	$(CC) $(DEFINES) $(CFLAGS) -o $@ chart-demo.c $(SOURCES) $(LIBS)
 waterfall-demo: waterfall-demo.c $(SOURCES) demo.h list.h Makefile
 	$(CC) $(DEFINES) $(CFLAGS) -o $@ waterfall-demo.c $(SOURCES) $(LIBS)
-dragon-demo: dragon-demo.c $(SOURCES) demo.h list.h Makefile
+dragon-demo: dragon-demo.c $(SOURCES) demo.h Makefile
 	$(CC) $(DEFINES) $(CFLAGS) -o $@ dragon-demo.c $(SOURCES) $(LIBS)
+pythagoras-demo: pythagoras-demo.c $(SOURCES) demo.h Makefile
+	$(CC) $(DEFINES) $(CFLAGS) -o $@ pythagoras-demo.c $(SOURCES) $(LIBS)
+wave-demo: wave-demo.c $(SOURCES) demo.h Makefile
+	$(CC) $(DEFINES) $(CFLAGS) -o $@ wave-demo.c $(SOURCES) $(LIBS)
 clean:
 	rm -f *-demo
 
