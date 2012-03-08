@@ -46,7 +46,42 @@ direction (int i, int np2)
 }
 
 static void
-path (cairo_t *cr, int step, int dir, int iterations)
+stroke_path (cairo_t *cr, double cx, double cy, int step, int dir, int iterations)
+{
+	double dx, dy;
+	int i, np2;
+
+	switch (dir) {
+	default:
+	case 0: dx =  step; dy =  0; break;
+	case 1: dx = -step; dy =  0; break;
+	case 2: dx =  0; dy =  step; break;
+	case 3: dx =  0; dy = -step; break;
+	}
+
+	np2 = 1;
+	cairo_move_to (cr, cx, cy);
+	for (i = 0; i < iterations; i++) {
+		cairo_rel_line_to (cr, dx, dy);
+
+		if (direction (i, np2)) {
+			double t = dx;
+			dx = dy;
+			dy = -t;
+		} else {
+			double t = dx;
+			dx = -dy;
+			dy = t;
+		}
+
+		if (i + 1 == np2)
+			np2 <<= 1;
+	}
+	cairo_stroke (cr);
+}
+
+static void
+fill_path (cairo_t *cr, double x0, double y0, int step, int dir, int iterations)
 {
 	double dx, dy;
 	int i, np2;
@@ -61,7 +96,14 @@ path (cairo_t *cr, int step, int dir, int iterations)
 
 	np2 = 1;
 	for (i = 0; i < iterations; i++) {
-		cairo_rel_line_to (cr, dx, dy);
+		if (dx) {
+			cairo_rectangle (cr, x0, y0-2, dx, 4);
+			x0 += dx;
+		} else {
+			cairo_rectangle (cr, x0-2, y0, 4, dy);
+			y0 += dy;
+		}
+		cairo_fill (cr);
 
 		if (direction (i, np2)) {
 			double t = dx;
@@ -79,7 +121,7 @@ path (cairo_t *cr, int step, int dir, int iterations)
 }
 
 static void
-dragon (cairo_t *cr, int width, int height, int iterations)
+dragon (cairo_t *cr, int width, int height, int iterations, int stroke)
 {
 	double cx, cy;
 
@@ -91,25 +133,29 @@ dragon (cairo_t *cr, int width, int height, int iterations)
 
 	cairo_set_line_width (cr, 4.);
 
-	cairo_move_to (cr, cx, cy);
-	path (cr, 12, 0, iterations);
 	cairo_set_source_rgb (cr, 1, 0, 0);
-	cairo_stroke(cr);
+	if (stroke)
+		stroke_path (cr, cx, cy, 12, 0, iterations);
+	else
+		fill_path (cr, cx, cy, 12, 0, iterations);
 
-	cairo_move_to (cr, cx, cy);
-	path (cr, 12, 1, iterations);
 	cairo_set_source_rgb (cr, 0, 1, 0);
-	cairo_stroke(cr);
+	if (stroke)
+		stroke_path (cr, cx, cy, 12, 1, iterations);
+	else
+		fill_path (cr, cx, cy, 12, 1, iterations);
 
-	cairo_move_to (cr, cx, cy);
-	path (cr, 12, 2, iterations);
 	cairo_set_source_rgb (cr, 0, 0, 1);
-	cairo_stroke(cr);
+	if (stroke)
+		stroke_path (cr, cx, cy, 12, 2, iterations);
+	else
+		fill_path (cr, cx, cy, 12, 2, iterations);
 
-	cairo_move_to (cr, cx, cy);
-	path (cr, 12, 3, iterations);
 	cairo_set_source_rgb (cr, 1, 1, 1);
-	cairo_stroke(cr);
+	if (stroke)
+		stroke_path (cr, cx, cy, 12, 3, iterations);
+	else
+		fill_path (cr, cx, cy, 12, 3, iterations);
 }
 
 static int done;
@@ -123,11 +169,13 @@ int main (int argc, char **argv)
 	struct device *device;
 	struct timeval start, last_tty, last_fps, now;
 	int iterations = 1;
+	int max_iterations;
 
 	double delta;
 	int frame = 0;
 	int frames = 0;
 	int show_fps = 1;
+	int stroke = 1;
 	int benchmark;
 	const char *version;
 	enum clip clip;
@@ -148,16 +196,18 @@ int main (int argc, char **argv)
 	for (n = 1; n < argc; n++) {
 		if (strcmp (argv[n], "--hide-fps") == 0)
 			show_fps = 0;
+		if (strcmp (argv[n], "--fill") == 0)
+			stroke = 0;
 	}
 
+	max_iterations = (device->width + device->height) / 4 / 8;
+	max_iterations *= max_iterations;
 	gettimeofday(&start, 0); now = last_tty = last_fps = start;
 	do {
 		struct framebuffer *fb = device->get_framebuffer (device);
 		cairo_t *cr = cairo_create(fb->surface);
 
-		dragon(cr, device->width, device->height, iterations);
-		if (++iterations == 4096)
-			iterations = 1;
+		dragon(cr, device->width, device->height, iterations, stroke);
 
 		gettimeofday(&now, NULL);
 		if (show_fps && last_fps.tv_sec) {
@@ -190,13 +240,16 @@ int main (int argc, char **argv)
 				break;
 			}
 		}
+
+		if (++iterations == max_iterations)
+			iterations = 1;
 	} while (!done);
 
 	if (benchmark < 0) {
 		struct framebuffer *fb = device->get_framebuffer (device);
 		cairo_t *cr = cairo_create(fb->surface);
 
-		dragon(cr, device->width, device->height, 2048);
+		dragon(cr, device->width, device->height, iterations, stroke);
 		cairo_destroy(cr);
 
 		fps_finish(fb, device->name, version);
