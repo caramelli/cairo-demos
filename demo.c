@@ -155,10 +155,10 @@ struct device *device_open(int argc, char **argv)
     if (backend == AUTO) {
 	if (device == 0 && HAVE_DRM)
 	    device = drm_open (argc, argv);
-	if (device == 0 && HAVE_XCB)
-	    device = xcb_open (argc, argv);
 	if (device == 0 && HAVE_XLIB)
 	    device = xlib_open (argc, argv);
+	if (device == 0 && HAVE_XCB)
+	    device = xcb_open (argc, argv);
 	if (device == 0 && HAVE_GLX)
 	    device = glx_open (argc, argv);
 	if (device == 0 && HAVE_COGL)
