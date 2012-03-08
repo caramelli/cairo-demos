@@ -43,6 +43,8 @@ enum split {
 } device_get_split(int argc, char **argv);
 
 cairo_antialias_t device_get_antialias(int argc, char **argv);
+const char *device_antialias_to_string(cairo_antialias_t antialias);
+
 int device_get_benchmark(int argc, char **argv);
 enum clip {
 	CLIP_NONE,

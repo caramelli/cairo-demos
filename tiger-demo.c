@@ -74,17 +74,6 @@ static void tiger(struct device *device,
 	cairo_destroy (cr);
 }
 
-static const char *antialias_to_string(cairo_antialias_t antialias)
-{
-	switch (antialias) {
-	case CAIRO_ANTIALIAS_NONE: return "none";
-	case CAIRO_ANTIALIAS_FAST: return "fast";
-	case CAIRO_ANTIALIAS_GRAY: return "gray";
-	case CAIRO_ANTIALIAS_SUBPIXEL: return "subpixel";
-	default: return "best";
-	}
-}
-
 static int done;
 static void signal_handler(int sig)
 {
@@ -156,7 +145,7 @@ int main (int argc, char **argv)
 			delta += (now.tv_usec - start.tv_usec)*1e-6;
 			if (delta > benchmark) {
 				printf("tiger-%s: %.2f fps\n",
-				       antialias_to_string(antialias),
+				       device_antialias_to_string(antialias),
 				       frame / delta);
 				break;
 			}

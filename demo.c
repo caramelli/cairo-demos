@@ -94,14 +94,30 @@ static cairo_antialias_t str_to_antialias(const char *str)
 {
 	if (strcmp (str, "none") == 0)
 		return CAIRO_ANTIALIAS_NONE;
+#if CAIRO_VERSION > CAIRO_VERSION_ENCODE(1,11,3)
 	else if (strcmp (str, "fast") == 0)
 		return CAIRO_ANTIALIAS_FAST;
 	else if (strcmp (str, "good") == 0)
 		return CAIRO_ANTIALIAS_GOOD;
 	else if (strcmp (str, "best") == 0)
 		return CAIRO_ANTIALIAS_BEST;
+#endif
 	else
 		return CAIRO_ANTIALIAS_DEFAULT;
+}
+
+const char *device_antialias_to_string(cairo_antialias_t antialias)
+{
+	switch (antialias) {
+	case CAIRO_ANTIALIAS_NONE: return "none";
+#if CAIRO_VERSION > CAIRO_VERSION_ENCODE(1,11,3)
+	case CAIRO_ANTIALIAS_FAST: return "fast";
+	case CAIRO_ANTIALIAS_BEST: return "best";
+#endif
+	case CAIRO_ANTIALIAS_GRAY: return "gray";
+	case CAIRO_ANTIALIAS_SUBPIXEL: return "subpixel";
+	default: return "default";
+	}
 }
 
 cairo_antialias_t device_get_antialias(int argc, char **argv)
