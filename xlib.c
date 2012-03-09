@@ -9,11 +9,13 @@
 struct xlib_device {
     struct device base;
 
-    struct framebuffer fb;
+    int q;
+    struct framebuffer fb[2];
 
     Display *display;
     Window drawable;
-    Pixmap pixmap;
+    Pixmap pixmap[2];
+    GC gc;
 };
 
 static void
@@ -25,28 +27,29 @@ static void
 show (struct framebuffer *fb)
 {
     struct xlib_device *device = (struct xlib_device *) fb->device;
-    cairo_t *cr;
 
-    cr = cairo_create (device->base.scanout);
-    cairo_set_source_surface (cr, fb->surface, 0, 0);
-    cairo_paint (cr);
-    cairo_destroy (cr);
-
-    if (1) {
-	    XImage *image = XGetImage(device->display,
-				      device->pixmap,
-				      0, 0, 1, 1,
-				      AllPlanes, ZPixmap);
-	    if (image)
-		    XDestroyImage(image);
-    }
+    XCopyArea(device->display,
+	      device->pixmap[device->q&1],
+	      device->drawable,
+	      device->gc,
+	      0, 0,
+	      device->base.width, device->base.height,
+	      0, 0);
+    XFlush(device->display);
 }
 
 static struct framebuffer *
 get_fb (struct device *abstract_device)
 {
     struct xlib_device *device = (struct xlib_device *) abstract_device;
-    return &device->fb;
+    int q = ++device->q & 1;
+    XImage *image = XGetImage(device->display,
+			      device->pixmap[q],
+			      0, 0, 1, 1,
+			      AllPlanes, ZPixmap);
+    if (image)
+	    XDestroyImage(image);
+    return &device->fb[q];
 }
 
 struct device *
@@ -67,6 +70,7 @@ xlib_open (int argc, char **argv)
     device->base.name = "xlib";
     device->base.get_framebuffer = get_fb;
     device->display = dpy;
+    device->q = 0;
 
     screen = DefaultScreen (dpy);
     scr = XScreenOfDisplay (dpy, screen);
@@ -123,16 +127,31 @@ xlib_open (int argc, char **argv)
 						      DefaultVisual (dpy, screen),
 						      device->base.width, device->base.height);
 
-    device->pixmap = XCreatePixmap(dpy, device->drawable,
-				   device->base.width, device->base.height,
-				   DefaultDepth (dpy, screen));
-    device->fb.surface = cairo_xlib_surface_create (dpy, device->pixmap,
+    device->pixmap[0] = XCreatePixmap(dpy, device->drawable,
+				      device->base.width, device->base.height,
+				      DefaultDepth (dpy, screen));
+    device->fb[0].surface = cairo_xlib_surface_create (dpy, device->pixmap[0],
 						    DefaultVisual (dpy, screen),
 						    device->base.width, device->base.height);
 
-    device->fb.device = &device->base;
-    device->fb.show = show;
-    device->fb.destroy = destroy;
+    device->pixmap[1] = XCreatePixmap(dpy, device->drawable,
+				      device->base.width, device->base.height,
+				      DefaultDepth (dpy, screen));
+    device->fb[1].surface = cairo_xlib_surface_create (dpy, device->pixmap[1],
+						    DefaultVisual (dpy, screen),
+						    device->base.width, device->base.height);
+
+    device->fb[1].device = device->fb[0].device = &device->base;
+    device->fb[1].show = device->fb[0].show = show;
+    device->fb[1].destroy = device->fb[0].destroy = destroy;
+
+    {
+	    XGCValues gcv;
+
+	    gcv.graphics_exposures = False;
+	    device->gc = XCreateGC(dpy, device->drawable,
+				   GCGraphicsExposures, &gcv);
+    }
 
     return &device->base;
 }
