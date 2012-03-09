@@ -153,9 +153,11 @@ draw (cairo_t *cr, int w, int h)
 	cairo_set_source (cr, pattern);
 	cairo_pattern_destroy (pattern);
 
+	cairo_set_antialias (cr, CAIRO_ANTIALIAS_NONE);
 	cairo_fill_preserve (cr);
 	cairo_set_source_rgba (cr, .1, .75, .1, .9);
 	cairo_set_line_width (cr, 3.);
+	cairo_set_antialias (cr, CAIRO_ANTIALIAS_DEFAULT);
 	cairo_stroke (cr);
 }
 
