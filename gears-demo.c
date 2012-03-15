@@ -273,17 +273,6 @@ int main (int argc, char **argv)
 		fb->show (fb);
 		fb->destroy (fb);
 
-		if (benchmark < 0) {
-			delta = now.tv_sec - last_tty.tv_sec;
-			delta += (now.tv_usec - last_tty.tv_usec)*1e-6;
-			frames++;
-			if (delta >  5) {
-				printf("%.2f fps\n", frames/delta);
-				last_tty = now;
-				frames = 0;
-			}
-		}
-
 		frame++;
 		if (benchmark > 0) {
 			delta = now.tv_sec - start.tv_sec;
