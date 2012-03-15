@@ -25,7 +25,7 @@ static int irand(int n)
 	return r / (RAND_MAX/n);
 }
 
-static void show(cairo_t *cr, int width, int height)
+static void show(cairo_t *cr, int width, int height, int use_mask)
 {
 	int i, j;
 	int dx, dy, step;
@@ -35,11 +35,14 @@ static void show(cairo_t *cr, int width, int height)
 	step = min(dx, dy);
 	step = max(step, 4);
 
+	dx = (width-step*w)/2;
+	dy = (height-step*h)/2;
+
 	cairo_set_operator(cr, CAIRO_OPERATOR_CLEAR);
 	cairo_paint(cr);
 	cairo_set_operator(cr, CAIRO_OPERATOR_OVER);
 
-	cairo_translate(cr, (width-step*w)/2, (height-step*h)/2);
+	cairo_translate(cr, dx, dy);
 	cairo_scale(cr, step, step);
 
 	cairo_set_source_rgb(cr, 0.2, 0.2, 0.7);
@@ -73,18 +76,71 @@ static void show(cairo_t *cr, int width, int height)
 		cairo_stroke(cr);
 	} cairo_restore (cr);
 
-	each(i, 0, 2 * h) {
-		each(j, 0, 2 * w) {
-			uint8_t c = cell[i][j];
-			if (c & V) {
-				cairo_arc(cr, j/2+.5, i/2+.5, 1/5., 0, 2*M_PI);
-				cairo_set_source_rgb(cr, 0.70, 0.75, 0.75);
-				cairo_fill(cr);
+	if (use_mask) {
+		cairo_surface_t *mask;
+		cairo_t *tmp;
+
+		mask = cairo_surface_create_similar(cairo_get_target(cr),
+						    CAIRO_CONTENT_ALPHA,
+						    step, step);
+		tmp = cairo_create(mask);
+		cairo_arc(tmp, step/2., step/2., step/5., 0, 2 * M_PI);
+		cairo_set_operator(tmp, CAIRO_OPERATOR_ADD);
+		cairo_fill(tmp);
+		cairo_destroy(tmp);
+
+		cairo_save(cr);
+		cairo_identity_matrix(cr);
+		cairo_set_source_rgb(cr, 0.70, 0.75, 0.75);
+		each(i, 0, 2 * h) {
+			each(j, 0, 2 * w) {
+				uint8_t c = cell[i][j];
+				if (c & V)
+					cairo_mask_surface(cr, mask,
+							   j/2*step + dx,
+							   i/2*step + dy);
 			}
-			if (c & D) {
-				cairo_arc(cr, j/2+.5, i/2+.5, 1/4., 0, 2*M_PI);
-				cairo_set_source_rgb(cr, 0.5, 0.0, 0.0);
-				cairo_fill(cr);
+		}
+		cairo_restore(cr);
+		cairo_surface_destroy(mask);
+
+		mask = cairo_surface_create_similar(cairo_get_target(cr),
+						    CAIRO_CONTENT_ALPHA,
+						    step, step);
+		tmp = cairo_create(mask);
+		cairo_arc(tmp, step/2., step/2., step/4., 0, 2 * M_PI);
+		cairo_set_operator(tmp, CAIRO_OPERATOR_ADD);
+		cairo_fill(tmp);
+		cairo_destroy(tmp);
+
+		cairo_save(cr);
+		cairo_identity_matrix(cr);
+		cairo_set_source_rgb(cr, 0.5, 0.0, 0.0);
+		each(i, 0, 2 * h) {
+			each(j, 0, 2 * w) {
+				uint8_t c = cell[i][j];
+				if (c & D)
+					cairo_mask_surface(cr, mask,
+							   j/2*step + dx,
+							   i/2*step + dy);
+			}
+		}
+		cairo_surface_destroy(mask);
+		cairo_restore(cr);
+	} else {
+		each(i, 0, 2 * h) {
+			each(j, 0, 2 * w) {
+				uint8_t c = cell[i][j];
+				if (c & V) {
+					cairo_arc(cr, j/2+.5, i/2+.5, 1/5., 0, 2*M_PI);
+					cairo_set_source_rgb(cr, 0.70, 0.75, 0.75);
+					cairo_fill(cr);
+				}
+				if (c & D) {
+					cairo_arc(cr, j/2+.5, i/2+.5, 1/4., 0, 2*M_PI);
+					cairo_set_source_rgb(cr, 0.5, 0.0, 0.0);
+					cairo_fill(cr);
+				}
 			}
 		}
 	}
@@ -257,6 +313,7 @@ int main (int argc, char **argv)
 	double delta;
 	int frame = 0;
 	int show_fps = 1;
+	int use_mask = 0;
 	int benchmark;
 	const char *version = device_show_version(argc, argv);
 	//enum clip clip = device_get_clip(argc, argv);
@@ -274,6 +331,8 @@ int main (int argc, char **argv)
 	for (n = 1; n < argc; n++) {
 		if (strcmp (argv[n], "--hide-fps") == 0)
 			show_fps = 0;
+		else if (strcmp (argv[n], "--use-mask") == 0)
+			use_mask = 1;
 	}
 
 	maze_create();
@@ -290,7 +349,7 @@ int main (int argc, char **argv)
 			if (cell[i][j] & (V|D)) cell[i][j] = 0;
 		i = iterations++;
 		ret = solve(1, 1, 2 * w - 1, 2 * h - 1, &i);
-		show(cr, device->width, device->height);
+		show(cr, device->width, device->height, use_mask);
 
 		gettimeofday(&now, NULL);
 		if (show_fps && last_fps.tv_sec) {
@@ -330,7 +389,7 @@ int main (int argc, char **argv)
 		struct framebuffer *fb = device->get_framebuffer (device);
 		cairo_t *cr = cairo_create(fb->surface);
 
-		show(cr, device->width, device->height);
+		show(cr, device->width, device->height, use_mask);
 		cairo_destroy(cr);
 
 		fps_finish(fb, device->name, version);
