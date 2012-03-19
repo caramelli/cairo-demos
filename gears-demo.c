@@ -220,7 +220,6 @@ int main (int argc, char **argv)
 
 	double delta;
 	int frame = 0;
-	int frames = 0;
 	const char *version = NULL;
 	int benchmark;
 	int show_fps = 1;
