@@ -28,7 +28,14 @@
 #define _USE_MATH_DEFINES /* for M_SQRT2 on win32 */
 #include <math.h>
 #include <string.h>
+#include <stdio.h>
+#include <signal.h>
+#include <unistd.h>
 #include <sys/time.h>
+
+#ifndef MAX
+#define MAX(a,b) ((a) >= (b) ? (a) : (b))
+#endif
 
 static void
 add_rectangle (cairo_t *cr, double size)

@@ -16,6 +16,9 @@
 
 #include <cairo.h>
 #include <sys/time.h>
+#include <stdio.h>
+#include <signal.h>
+#include <unistd.h>
 
 #include "demo.h"
 

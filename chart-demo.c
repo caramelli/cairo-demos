@@ -1,7 +1,10 @@
 #include <cairo.h>
 #include <sys/time.h>
 #include <stdlib.h>
+#include <stdio.h>
+#include <signal.h>
 #include <string.h>
+#include <unistd.h>
 #include <math.h>
 
 #include "demo.h"

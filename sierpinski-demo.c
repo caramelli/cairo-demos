@@ -1,5 +1,8 @@
 #include "demo.h"
 #include <string.h>
+#include <stdio.h>
+#include <signal.h>
+#include <unistd.h>
 #include <sys/time.h>
 #include <math.h>
 

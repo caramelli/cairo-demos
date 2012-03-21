@@ -1,6 +1,9 @@
 #include <cairo.h>
 #include <sys/time.h>
 #include <stdlib.h>
+#include <stdio.h>
+#include <signal.h>
+#include <unistd.h>
 #include <string.h>
 
 #include "demo.h"

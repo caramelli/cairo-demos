@@ -28,12 +28,15 @@
 
 #include "demo.h"
 #include <string.h>
+#include <stdio.h>
+#include <signal.h>
+#include <unistd.h>
 #include <sys/time.h>
 
-static cairo_bool_t
+static int
 direction (int i, int np2)
 {
-	cairo_bool_t ret = TRUE;
+	int ret = 1;
 
 	while (i >= 2 && i + 1 < np2) {
 		i = np2 - i - 2;

@@ -214,6 +214,7 @@ struct device *device_open(int argc, char **argv)
     return device;
 }
 
+#if HAVE_GDK_PIXBUF
 cairo_surface_t *
 _cairo_image_surface_create_from_pixbuf(const GdkPixbuf *pixbuf)
 {
@@ -291,6 +292,7 @@ _cairo_image_surface_create_from_pixbuf(const GdkPixbuf *pixbuf)
 
 	return surface;
 }
+#endif
 
 #define N_FILTER 25
 static double filter[N_FILTER];

@@ -27,6 +27,9 @@
 #include "demo.h"
 #include <stdlib.h>
 #include <string.h>
+#include <stdio.h>
+#include <unistd.h>
+#include <signal.h>
 #include <sys/time.h>
 
 static unsigned int seed = 0xdeadbeef;
