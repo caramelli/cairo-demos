@@ -1,5 +1,5 @@
 SOURCES:=demo.c
-REQUIRES:=
+REQUIRES:=cairo
 
 DRM:=0
 ifneq ($(DRM),0)
@@ -10,7 +10,7 @@ else
 DEFINES+=-DHAVE_DRM=0
 endif
 
-XLIB:=$(shell pkg-config --exists cairo-xcb && echo 1 || echo 0)
+XLIB:=$(shell pkg-config --exists cairo-xlib && echo 1 || echo 0)
 ifneq ($(XLIB),0)
 DEFINES+=-DHAVE_XLIB=1 -DHAVE_XIMAGE=1
 SOURCES+=xlib.c ximage.c
@@ -60,7 +60,7 @@ DEFINES+=-DHAVE_GDK_PIXBUF
 endif
 
 CFLAGS:=$(shell pkg-config --cflags $(REQUIRES)) -Wall -g3
-LIBS:=$(shell pkg-config --libs $(REQUIRES))
+LIBS:=$(shell pkg-config --libs $(REQUIRES)) -lm
 
 spinner-demo: spinner-demo.c $(SOURCES) demo.h Makefile
 	$(CC) $(DEFINES) $(CFLAGS) -o $@ spinner-demo.c $(SOURCES) $(LIBS)
