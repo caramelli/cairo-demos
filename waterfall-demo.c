@@ -186,7 +186,7 @@ int main (int argc, char **argv)
 			delta = now.tv_sec - start.tv_sec;
 			delta += (now.tv_usec - start.tv_usec)*1e-6;
 			if (delta > benchmark) {
-				printf("chart: %.2f fps\n", frame / delta);
+				printf("waterfall: %.2f fps\n", frame / delta);
 				break;
 			}
 		}
