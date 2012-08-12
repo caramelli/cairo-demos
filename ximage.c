@@ -11,6 +11,7 @@
 
 struct ximage_device {
     struct device base;
+    struct framebuffer fb;
 
     Display *display;
     Window drawable;
@@ -21,16 +22,9 @@ struct ximage_device {
     XShmSegmentInfo shm;
 };
 
-struct ximage_framebuffer {
-    struct framebuffer base;
-};
-
 static void
 destroy (struct framebuffer *abstract_framebuffer)
 {
-    struct ximage_framebuffer *fb = (struct ximage_framebuffer *) abstract_framebuffer;
-
-    free (fb);
 }
 
 static cairo_bool_t
@@ -42,10 +36,9 @@ _native_byte_order_lsb (void)
 }
 
 static void
-show (struct framebuffer *abstract_framebuffer)
+show (struct framebuffer *fb)
 {
-    struct ximage_framebuffer *fb = (struct ximage_framebuffer *) abstract_framebuffer;
-    struct ximage_device *device = (struct ximage_device *) fb->base.device;
+    struct ximage_device *device = (struct ximage_device *) fb->device;
 
     if (device->pixmap) {
 	XCopyArea (device->display, device->pixmap, device->drawable, device->gc,
@@ -81,30 +74,11 @@ show (struct framebuffer *abstract_framebuffer)
     XSync (device->display, True);
 }
 
-static void
-clear(cairo_surface_t *surface)
-{
-	cairo_t *cr = cairo_create (surface);
-	cairo_set_operator (cr, CAIRO_OPERATOR_CLEAR);
-	cairo_paint (cr);
-	cairo_destroy (cr);
-}
-
 static struct framebuffer *
 get_fb (struct device *abstract_device)
 {
     struct ximage_device *device = (struct ximage_device *) abstract_device;
-    struct ximage_framebuffer *fb;
-
-    fb = malloc (sizeof (struct ximage_framebuffer));
-    fb->base.device = &device->base;
-    fb->base.show = show;
-    fb->base.destroy = destroy;
-
-    fb->base.surface = cairo_surface_reference (device->base.scanout);
-    clear(fb->base.surface);
-
-    return &fb->base;
+    return &device->fb;
 }
 
 struct device *
@@ -216,6 +190,11 @@ ximage_open (int argc, char **argv)
 
     gcv.graphics_exposures = False;
     device->gc = XCreateGC (dpy, device->drawable, GCGraphicsExposures, &gcv);
+
+    device->fb.device = &device->base;
+    device->fb.show = show;
+    device->fb.destroy = destroy;
+    device->fb.surface = device->base.scanout;
 
     return &device->base;
 }
