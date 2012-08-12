@@ -16,6 +16,11 @@ struct fish {
 	int frame, rgb;
 };
 
+static cairo_pattern_t *solid_background(void)
+{
+	return cairo_pattern_create_rgb (0.2, 0.4, 0.6);
+}
+
 static cairo_pattern_t *create_background(struct device *device, int *x1, int *x2)
 {
 	cairo_surface_t *surface, *image;
@@ -184,6 +189,7 @@ int main (int argc, char **argv)
 	const char *version;
 	enum clip clip;
 	cairo_pattern_t *reflection = NULL;
+	int solid_bg = 0;
 	int x1, x2;
 
 	device = device_open(argc, argv);
@@ -200,9 +206,14 @@ int main (int argc, char **argv)
 			num_fish = atoi(argv[n]+11);
 		else if (strcmp(argv[n], "--reflection") == 0)
 			reflection = (void *)1;
+		else if (strcmp(argv[n], "--solid-background") == 0)
+			solid_bg = 1;
 	}
 
-	bg = create_background(device, &x1, &x2);
+	if (solid_bg)
+		bg = solid_background();
+	else
+		bg = create_background(device, &x1, &x2);
 	if (cairo_pattern_status(bg))
 		return 1;
 
