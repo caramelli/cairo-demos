@@ -216,7 +216,7 @@ static void maze_create(void)
 	int i, h2 = 2 * h + 2, w2 = 2 * w + 2;
 	uint8_t **p;
 
-	p = calloc(sizeof(uint8_t*) * (h2 + 2) + w2 * h2 + 1, 1);
+	p = (uint8_t **)calloc(sizeof(uint8_t*) * (h2 + 2) + w2 * h2 + 1, 1);
 
 	p[1] = (uint8_t*)(p + h2 + 2) + 1;
 	each(i, 2, h2) p[i] = p[i-1] + w2;

@@ -1,4 +1,5 @@
 #include <cairo-xlib.h>
+#include <cairo-skia.h>
 
 #include "demo.h"
 
@@ -9,7 +10,7 @@
 #include <sys/ipc.h>
 #include <sys/shm.h>
 
-struct ximage_device {
+struct skia_device {
     struct device base;
     struct framebuffer fb;
 
@@ -38,7 +39,7 @@ _native_byte_order_lsb (void)
 static void
 show (struct framebuffer *fb)
 {
-    struct ximage_device *device = (struct ximage_device *) fb->device;
+    struct skia_device *device = (struct skia_device *) fb->device;
 
     if (device->pixmap) {
 	XCopyArea (device->display, device->pixmap, device->drawable, device->gc,
@@ -77,14 +78,14 @@ show (struct framebuffer *fb)
 static struct framebuffer *
 get_fb (struct device *abstract_device)
 {
-    struct ximage_device *device = (struct ximage_device *) abstract_device;
+    struct skia_device *device = (struct skia_device *) abstract_device;
     return &device->fb;
 }
 
 struct device *
-ximage_open (int argc, char **argv)
+skia_open (int argc, char **argv)
 {
-    struct ximage_device *device;
+    struct skia_device *device;
     Display *dpy;
     Screen *scr;
     int screen;
@@ -102,8 +103,8 @@ ximage_open (int argc, char **argv)
 	return NULL;
     }
 
-    device = (struct ximage_device *) malloc (sizeof (struct ximage_device));
-    device->base.name = "ximage";
+    device = (struct skia_device *) malloc (sizeof (struct skia_device));
+    device->base.name = "skia";
     device->base.get_framebuffer = get_fb;
     device->display = dpy;
 
@@ -167,7 +168,7 @@ ximage_open (int argc, char **argv)
     if (!XShmAttach (dpy, &device->shm))
 	abort ();
 
-    device->base.scanout = cairo_image_surface_create_for_data ((uint8_t *) device->shm.shmaddr,
+    device->base.scanout = cairo_skia_surface_create_for_data ((uint8_t *) device->shm.shmaddr,
 								CAIRO_FORMAT_RGB24,
 								device->base.width,
 								device->base.height,

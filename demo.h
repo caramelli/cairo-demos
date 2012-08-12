@@ -40,7 +40,8 @@ enum split {
 	SPLIT_TOP_RIGHT,
 	SPLIT_BOTTOM_LEFT,
 	SPLIT_BOTTOM_RIGHT,
-} device_get_split(int argc, char **argv);
+};
+enum split device_get_split(int argc, char **argv);
 
 cairo_antialias_t device_get_antialias(int argc, char **argv);
 const char *device_antialias_to_string(cairo_antialias_t antialias);
@@ -54,7 +55,8 @@ enum clip {
 	CLIP_BOX2,
 	CLIP_DIAMOND,
 	CLIP_CIRCLE,
-} device_get_clip(int argc, char **argv);
+};
+enum clip device_get_clip(int argc, char **argv);
 void device_apply_clip(struct device *device, cairo_t *cr, enum clip c);
 
 #if HAVE_COGL
@@ -91,6 +93,12 @@ static inline struct device *ximage_open (int argc, char **argv) { return 0; }
 struct device *drm_open (int argc, char **argv);
 #else
 static inline struct device *drm_open (int argc, char **argv) { return 0; }
+#endif
+
+#if HAVE_SKIA
+struct device *skia_open (int argc, char **argv);
+#else
+static inline struct device *skia_open (int argc, char **argv) { return 0; }
 #endif
 
 #if HAVE_GDK_PIXBUF

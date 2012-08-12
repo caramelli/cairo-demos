@@ -41,8 +41,7 @@ static int load_source(const char *filename, struct device *device)
 	if (!preload && !prescale) {
 		struct source *s;
 
-		s = realloc(sources,
-			    (num_sources+1)*sizeof(struct source));
+		s = (struct source *)realloc(sources, (num_sources+1)*sizeof(struct source));
 		if (s == NULL) {
 			cairo_surface_destroy(image);
 			return 0;
@@ -89,8 +88,7 @@ static int load_source(const char *filename, struct device *device)
 	if (status == CAIRO_STATUS_SUCCESS) {
 		struct source *s;
 
-		s = realloc(sources,
-			    (num_sources+1)*sizeof(struct source));
+		s = (struct source *)realloc(sources, (num_sources+1)*sizeof(struct source));
 		if (s) {
 			s[num_sources].surface =
 				cairo_surface_reference(surface);

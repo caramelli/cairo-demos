@@ -84,7 +84,7 @@ static cairo_surface_t **create_strip(struct device *device)
 	fish_width = width;
 	fish_height = height;
 
-	strip = malloc(sizeof(cairo_surface_t*)*48);
+	strip = (cairo_surface_t **)malloc(sizeof(cairo_surface_t*)*48);
 	for (y = 0; y < 3; y++) {
 		for (x = 0; x < 16; x++) {
 			strip[y*16+x] =
@@ -205,11 +205,12 @@ int main (int argc, char **argv)
 		if (strncmp(argv[n], "--num-fish=", 11) == 0)
 			num_fish = atoi(argv[n]+11);
 		else if (strcmp(argv[n], "--reflection") == 0)
-			reflection = (void *)1;
+			reflection = (cairo_pattern_t *)1;
 		else if (strcmp(argv[n], "--solid-background") == 0)
 			solid_bg = 1;
 	}
 
+	x1 = -1;
 	if (solid_bg)
 		bg = solid_background();
 	else
@@ -217,9 +218,7 @@ int main (int argc, char **argv)
 	if (cairo_pattern_status(bg))
 		return 1;
 
-	if (reflection == NULL || x1 < 0) {
-		x1 = 0, x2 = device->width;
-	} else {
+	if (reflection != NULL && x1 >= 0) {
 		reflection = cairo_pattern_create_linear(0,0, device->width, 0);
 		cairo_pattern_add_color_stop_rgba(reflection, 0, 0, 0, 0, 0);
 		cairo_pattern_add_color_stop_rgba(reflection, x1/(double)device->width, 0, 0, 0, .75);
@@ -227,11 +226,12 @@ int main (int argc, char **argv)
 		cairo_pattern_add_color_stop_rgba(reflection, x2/(double)device->width, 0, 0, 0, 1);
 		cairo_pattern_add_color_stop_rgba(reflection, x2/(double)device->width, 0, 0, 0, .75);
 		cairo_pattern_add_color_stop_rgba(reflection, 1, 0, 0, 0, 0);
-	}
+	} else
+		x1 = 0, x2 = device->width;
 
 	strip = create_strip(device);
 
-	fish = malloc(sizeof(*fish)*num_fish);
+	fish = (struct fish *)malloc(sizeof(*fish)*num_fish);
 	for (n = 0; n < num_fish; n++)
 		fish_init(device, &fish[n], x1, x2);
 

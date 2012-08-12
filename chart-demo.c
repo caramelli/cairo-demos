@@ -40,7 +40,7 @@ static void chart_init(struct chart *c,
 {
 	int n;
 
-	c->array = malloc(size);
+	c->array = (int8_t *)malloc(size);
 	c->y = y;
 	c->scale = scale;
 	c->size = size;

@@ -46,6 +46,15 @@ else
 DEFINES+=-DHAVE_COGL=0
 endif
 
+SKIA:=$(shell pkg-config --exists cairo-skia && echo 1 || echo 0)
+ifneq ($(SKIA),0)
+DEFINES+=-DHAVE_SKIA=1
+SOURCES+=skia.c
+REQUIRES+=cairo-skia
+else
+DEFINES+=-DHAVE_SKIA=0
+endif
+
 all: spiral-demo tiger-demo fish-demo flowers-demo gears-demo gradient-demo chart-demo waterfall-demo dragon-demo pythagoras-demo wave-demo sierpinski-demo maze-demo
 
 ifeq ($(shell pkg-config --exists poppler-glib && echo 1), 1)
