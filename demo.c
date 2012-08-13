@@ -224,7 +224,7 @@ struct device *device_open(int argc, char **argv)
 
 #if HAVE_GDK_PIXBUF
 cairo_surface_t *
-_cairo_image_surface_create_from_pixbuf(const GdkPixbuf *pixbuf)
+surface_create_from_pixbuf(cairo_surface_t *other, const GdkPixbuf *pixbuf)
 {
 	gint width = gdk_pixbuf_get_width (pixbuf);
 	gint height = gdk_pixbuf_get_height (pixbuf);
@@ -242,7 +242,10 @@ _cairo_image_surface_create_from_pixbuf(const GdkPixbuf *pixbuf)
 	else
 		format = CAIRO_FORMAT_ARGB32;
 
-	surface = cairo_image_surface_create(format, width, height);
+	if (other == NULL || cairo_version () < CAIRO_VERSION_ENCODE (1, 12, 0))
+		surface = cairo_image_surface_create(format, width, height);
+	else
+		surface = cairo_surface_create_similar_image(other, format, width, height);
 	if (cairo_surface_status(surface))
 		return surface;
 

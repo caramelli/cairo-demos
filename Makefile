@@ -1,4 +1,4 @@
-SOURCES:=demo.c
+SOURCES:=demo.c png.c
 REQUIRES:=cairo
 
 DRM:=0
@@ -69,7 +69,7 @@ DEFINES+=-DHAVE_GDK_PIXBUF
 endif
 
 CFLAGS:=$(shell pkg-config --cflags $(REQUIRES)) -Wall -g3
-LIBS:=$(shell pkg-config --libs $(REQUIRES)) -lm
+LIBS:=$(shell pkg-config --libs $(REQUIRES)) -lpng -lm
 
 spinner-demo: spinner-demo.c $(SOURCES) demo.h Makefile
 	$(CC) $(DEFINES) $(CFLAGS) -o $@ spinner-demo.c $(SOURCES) $(LIBS)

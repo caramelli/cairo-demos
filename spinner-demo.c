@@ -32,7 +32,7 @@ static int load_source(const char *filename, struct device *device)
 	if (pb == NULL)
 		return 0;
 
-	image = _cairo_image_surface_create_from_pixbuf(pb);
+	image = surface_create_from_pixbuf(device->scanout, pb);
 	g_object_unref(pb);
 
 	width = cairo_image_surface_get_width(image);

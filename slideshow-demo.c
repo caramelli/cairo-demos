@@ -35,7 +35,7 @@ static int load_sources_file(const char *filename,
 	if (pb == NULL)
 		return 0;
 
-	image = _cairo_image_surface_create_from_pixbuf(pb);
+	image = surface_create_from_pixbuf(preload ? target : NULL, pb);
 	g_object_unref(pb);
 
 	width = cairo_image_surface_get_width(image);

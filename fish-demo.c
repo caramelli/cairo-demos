@@ -30,8 +30,7 @@ static cairo_pattern_t *create_background(struct device *device, int *x1, int *x
 	double sf;
 	cairo_t *cr;
 
-	image = cairo_image_surface_create_from_png("fishbg.png");
-
+	image = surface_create_from_png(device->scanout, "fishbg.png");
 	height = cairo_image_surface_get_height(image);
 	width = cairo_image_surface_get_width(image);
 	sf = height / (double)device->height;
@@ -65,11 +64,11 @@ static cairo_surface_t **create_strip(struct device *device)
 	int width, height, x, y;
 	cairo_t *cr;
 
-	image = cairo_image_surface_create_from_png("fishstrip.png");
+	image = surface_create_from_png(device->scanout, "fishstrip.png");
 	width = cairo_image_surface_get_width(image);
 	height = cairo_image_surface_get_height(image);
 	surface = cairo_surface_create_similar(device->scanout,
-					       CAIRO_CONTENT_COLOR_ALPHA,
+					       cairo_surface_get_content (image),
 					       width, height);
 	cr = cairo_create(surface);
 	cairo_set_source_surface(cr, image, 0, 0);

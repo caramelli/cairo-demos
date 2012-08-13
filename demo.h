@@ -105,8 +105,11 @@ static inline struct device *skia_open (int argc, char **argv) { return 0; }
 #include <gdk-pixbuf/gdk-pixbuf.h>
 
 cairo_surface_t *
-_cairo_image_surface_create_from_pixbuf(const GdkPixbuf *pixbuf);
+surface_create_from_pixbuf(cairo_surface_t *other, const GdkPixbuf *pixbuf);
 #endif
+
+cairo_surface_t *
+surface_create_from_png (cairo_surface_t *other, const char *filename);
 
 void
 fps_draw (cairo_t *cr, const char *name, const char *version,
