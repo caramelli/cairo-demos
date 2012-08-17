@@ -145,6 +145,7 @@ struct device *device_open(int argc, char **argv)
 	AUTO,
 	XLIB,
 	XIMAGE,
+	XSHM,
 	SKIA,
 	XCB,
 	GLX,
@@ -160,6 +161,8 @@ struct device *device_open(int argc, char **argv)
 	    backend = XCB;
 	} else if (strcmp (argv[n], "--ximage") == 0) {
 	    backend = XIMAGE;
+	} else if (strcmp (argv[n], "--xshm") == 0) {
+	    backend = XSHM;
 	} else if (strcmp (argv[n], "--drm") == 0) {
 	    backend = DRM;
 	} else if (strcmp (argv[n], "--glx") == 0) {
@@ -184,6 +187,8 @@ struct device *device_open(int argc, char **argv)
 	    device = cogl_open (argc, argv);
 	if (device == 0 && HAVE_XIMAGE)
 	    device = ximage_open (argc, argv);
+	if (device == 0 && HAVE_XSHM)
+	    device = xshm_open (argc, argv);
 	if (device == 0 && HAVE_SKIA)
 	    device = skia_open (argc, argv);
     } else switch (backend) {
@@ -196,6 +201,9 @@ struct device *device_open(int argc, char **argv)
 	break;
     case XIMAGE:
 	device = ximage_open (argc, argv);
+	break;
+    case XSHM:
+	device = xshm_open (argc, argv);
 	break;
     case SKIA:
 	device = skia_open (argc, argv);

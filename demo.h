@@ -89,6 +89,12 @@ struct device *ximage_open (int argc, char **argv);
 static inline struct device *ximage_open (int argc, char **argv) { return 0; }
 #endif
 
+#if HAVE_XSHM
+struct device *xshm_open (int argc, char **argv);
+#else
+static inline struct device *xshm_open (int argc, char **argv) { return 0; }
+#endif
+
 #if HAVE_DRM
 struct device *drm_open (int argc, char **argv);
 #else

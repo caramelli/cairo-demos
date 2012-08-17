@@ -28,6 +28,8 @@ show (struct framebuffer *fb)
 {
     struct xlib_device *device = (struct xlib_device *) fb->device;
 
+    cairo_surface_flush (fb->surface);
+
     XCopyArea(device->display,
 	      device->pixmap[device->q&1],
 	      device->drawable,
