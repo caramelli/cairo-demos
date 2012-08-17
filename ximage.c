@@ -5,10 +5,6 @@
 #include <stdlib.h>
 #include <stdio.h>
 
-#include <X11/extensions/XShm.h>
-#include <sys/ipc.h>
-#include <sys/shm.h>
-
 struct ximage_device {
     struct device base;
     struct framebuffer fb;
