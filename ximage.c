@@ -8,7 +8,8 @@
 
 struct ximage_device {
     struct device base;
-    struct framebuffer fb;
+    struct framebuffer fb[2];
+    int q;
 };
 
 static void
@@ -41,7 +42,8 @@ static struct framebuffer *
 get_fb (struct device *abstract_device)
 {
     struct ximage_device *device = (struct ximage_device *) abstract_device;
-    return &device->fb;
+    int q = ++device->q & 1;
+    return &device->fb[q];
 }
 
 static void
@@ -57,8 +59,8 @@ static struct framebuffer *
 get_inplace_fb (struct device *abstract_device)
 {
     struct ximage_device *device = (struct ximage_device *) abstract_device;
-    device->fb.surface = cairo_surface_map_to_image (device->base.scanout, NULL);
-    return &device->fb;
+    device->fb[0].surface = cairo_surface_map_to_image (device->base.scanout, NULL);
+    return &device->fb[0];
 }
 
 struct device *
@@ -147,24 +149,28 @@ ximage_open (int argc, char **argv)
 				       device->base.width, device->base.height);
 
     if (map) {
-	    device->fb.show = inplace_show;
+	    device->fb[0].show = inplace_show;
 	    device->base.get_framebuffer = get_inplace_fb;
     } else {
-	    if (similar)
-		    device->fb.surface =
+	    if (similar) {
+		    device->fb[0].surface =
 			    cairo_surface_create_similar_image (device->base.scanout,
 								CAIRO_FORMAT_RGB24,
 								device->base.width, device->base.height);
-	    else
-		    device->fb.surface =
+		    device->fb[1].surface =
+			    cairo_surface_create_similar_image (device->base.scanout,
+								CAIRO_FORMAT_RGB24,
+								device->base.width, device->base.height);
+	    } else
+		    device->fb[1].surface = device->fb[0].surface =
 			    cairo_image_surface_create (CAIRO_FORMAT_RGB24,
 							device->base.width, device->base.height);
 
-	    device->fb.show = show;
+	    device->fb[1].show = device->fb[0].show = show;
 	    device->base.get_framebuffer = get_fb;
     }
-    device->fb.destroy = destroy;
-    device->fb.device = &device->base;
+    device->fb[1].destroy = device->fb[0].destroy = destroy;
+    device->fb[1].device = device->fb[0].device = &device->base;
 
     return &device->base;
 }
