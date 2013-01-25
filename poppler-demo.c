@@ -76,25 +76,44 @@ main (int argc, char **argv)
 	struct framebuffer *fb;
 	PopplerPage *page;
 	double page_width, page_height;
-	double sf_x, sf_y, sf;
+	double sf_x, sf_y, sf, x;
+	int i = 0;
 
 	fb = device->get_framebuffer (device);
-
-	page = poppler_document_get_page (document, n++ % num_pages);
 
 	cr = cairo_create (fb->surface);
 
 	cairo_set_source_rgb (cr, 1, 1, 1);
 	cairo_paint (cr);
 
+	page = poppler_document_get_page (document, (n >> 2) % num_pages);
 	poppler_page_get_size (page, &page_width, &page_height);
 	sf_x = device->width / page_width;
 	sf_y = device->height / page_height;
 	sf = MIN (sf_x, sf_y);
+	x = -sf * page_width * (n & 3) / 4;
 	cairo_save(cr);
-	cairo_scale (cr, sf, sf);
+	cairo_translate (cr, x, 0);
+	do {
+		cairo_save(cr);
+		cairo_scale (cr, sf, sf);
 
-	poppler_page_render (page, cr);
+		poppler_page_render (page, cr);
+		cairo_restore(cr);
+
+		x += sf * page_width;
+		if (x > device->width)
+			break;
+
+		cairo_translate (cr, sf*page_width, 0);
+		g_object_unref (page);
+
+		page = poppler_document_get_page (document, (++i+ (n >> 2)) % num_pages);
+		poppler_page_get_size (page, &page_width, &page_height);
+		sf_x = device->width / page_width;
+		sf_y = device->height / page_height;
+		sf = MIN (sf_x, sf_y);
+	} while (1);
 	cairo_restore(cr);
 	g_object_unref (page);
 
@@ -106,6 +125,7 @@ main (int argc, char **argv)
 
 	fb->show (fb);
 	fb->destroy (fb);
+	n++;
     } while (!done);
 
     if (benchmark < 0) {
