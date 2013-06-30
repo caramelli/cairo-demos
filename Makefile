@@ -56,7 +56,7 @@ else
 DEFINES+=-DHAVE_SKIA=0
 endif
 
-all: spiral-demo tiger-demo fish-demo flowers-demo gears-demo gradient-demo chart-demo waterfall-demo dragon-demo pythagoras-demo wave-demo sierpinski-demo maze-demo
+all: spiral-demo tiger-demo fish-demo flowers-demo gears-demo gradient-demo chart-demo waterfall-demo dragon-demo pythagoras-demo wave-demo sierpinski-demo maze-demo bubble-demo
 
 ifeq ($(shell pkg-config --exists poppler-glib && echo 1), 1)
 all: poppler-demo
@@ -86,6 +86,8 @@ fish-demo: fish-demo.c $(SOURCES) demo.h Makefile
 	$(CC) $(DEFINES) $(CFLAGS) -o $@ fish-demo.c $(SOURCES) $(LIBS)
 fish2-demo: fish2-demo.c $(SOURCES) demo.h Makefile
 	$(CC) $(DEFINES) $(CFLAGS) -o $@ fish2-demo.c $(SOURCES) $(LIBS)
+bubble-demo: bubble-demo.c $(SOURCES) demo.h Makefile
+	$(CC) $(DEFINES) $(CFLAGS) -o $@ bubble-demo.c $(SOURCES) $(LIBS)
 flowers-demo: flowers-demo.c $(SOURCES) demo.h Makefile
 	$(CC) $(DEFINES) $(CFLAGS) -o $@ flowers-demo.c $(SOURCES) $(LIBS)
 gears-demo: gears-demo.c $(SOURCES) demo.h Makefile
