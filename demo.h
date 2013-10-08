@@ -40,6 +40,23 @@ enum split {
 	SPLIT_TOP_RIGHT,
 	SPLIT_BOTTOM_LEFT,
 	SPLIT_BOTTOM_RIGHT,
+
+	SPLIT_1_16 = 0x10,
+	SPLIT_2_16,
+	SPLIT_3_16,
+	SPLIT_4_16,
+	SPLIT_5_16,
+	SPLIT_6_16,
+	SPLIT_7_16,
+	SPLIT_8_16,
+	SPLIT_9_16,
+	SPLIT_10_16,
+	SPLIT_11_16,
+	SPLIT_12_16,
+	SPLIT_13_16,
+	SPLIT_14_16,
+	SPLIT_15_16,
+	SPLIT_16_16,
 };
 enum split device_get_split(int argc, char **argv);
 
@@ -123,5 +140,7 @@ fps_draw (cairo_t *cr, const char *name, const char *version,
 	  const struct timeval *now);
 void
 fps_finish (struct framebuffer *fb,
+	    const char *backend,
+	    const char *version,
 	    const char *name,
-	    const char *version);
+	    ...);

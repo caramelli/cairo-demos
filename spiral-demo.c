@@ -177,7 +177,7 @@ int main (int argc, char **argv)
 		spiral_draw(device, cr, antialias, clip);
 		cairo_destroy(cr);
 
-		fps_finish(fb, device->name, version);
+		fps_finish(fb, device->name, version, "spiral");
 		fb->show (fb);
 		fb->destroy (fb);
 		pause();

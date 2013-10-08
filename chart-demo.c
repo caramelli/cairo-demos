@@ -324,7 +324,7 @@ int main (int argc, char **argv)
 		chart_draw(device, cr, antialias, clip, c, 5, vertical);
 		cairo_destroy(cr);
 
-		fps_finish(fb, device->name, version);
+		fps_finish(fb, device->name, version, "chart%s", vertical ? "-vertical" : "");
 		fb->show (fb);
 		fb->destroy (fb);
 		pause();

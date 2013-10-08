@@ -367,7 +367,7 @@ int main(int argc, char **argv)
 			bubble_draw(cr, &bubble[n]);
 		cairo_destroy(cr);
 
-		fps_finish(fb, device->name, version);
+		fps_finish(fb, device->name, version, "bubble");
 		fb->show (fb);
 		fb->destroy (fb);
 		pause();

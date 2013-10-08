@@ -254,7 +254,7 @@ int main (int argc, char **argv)
 		draw(cr, device->width, device->height);
 		cairo_destroy(cr);
 
-		fps_finish(fb, device->name, version);
+		fps_finish(fb, device->name, version, "gradient");
 		fb->show (fb);
 		fb->destroy (fb);
 		pause();

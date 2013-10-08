@@ -1,6 +1,7 @@
 #include <string.h>
 #include <stdio.h>
 #include <stdlib.h>
+#include <stdarg.h>
 #include <math.h>
 
 #include "demo.h"
@@ -52,6 +53,8 @@ enum split device_get_split(int argc, char **argv)
 				split = SPLIT_BOTTOM_LEFT;
 			} else if (strcmp(argv[n]+8, "bottom-right") == 0) {
 				split = SPLIT_BOTTOM_RIGHT;
+			} else {
+				split = SPLIT_1_16 + atoi(argv[n]+8);
 			}
 		}
 	}
@@ -373,13 +376,16 @@ fps_draw (cairo_t *cr,
 
 void
 fps_finish (struct framebuffer *fb,
+	    const char *backend,
+	    const char *version,
 	    const char *name,
-	    const char *version)
+	    ...)
 {
 	cairo_t *cr = cairo_create(fb->surface);
 	cairo_text_extents_t extents;
 	char buf[80];
 	double avg;
+	va_list ap;
 
 	if (frame_count == 0)
 		return;
@@ -388,10 +394,10 @@ fps_finish (struct framebuffer *fb,
 
 	if (version)
 		snprintf (buf, sizeof (buf), "%s (%s): %.1f fps, %d frames",
-			  name, version, 1. / avg, frame_count);
+			  backend, version, 1. / avg, frame_count);
 	else
 		snprintf (buf, sizeof (buf), "%s: %.1f fps, %d frames",
-			  name, 1. / avg, frame_count);
+			  backend, 1. / avg, frame_count);
 	cairo_set_font_size (cr, 32);
 	cairo_text_extents (cr, buf, &extents);
 
@@ -410,6 +416,14 @@ fps_finish (struct framebuffer *fb,
 	cairo_set_source_rgb (cr, .95, .95, .95);
 	cairo_show_text (cr, buf);
 	cairo_destroy (cr);
+
+	va_start(ap, name);
+	vfprintf (stdout, name, ap);
+	va_end(ap);
+
+	printf (": %.1f fps, %d frames, %.1f seconds\n",
+		1. / avg, frame_count, total_duration);
+	fflush (stdout);
 }
 
 #ifndef min

@@ -72,6 +72,7 @@ ximage_open (int argc, char **argv)
     Window win;
     int screen;
     XSetWindowAttributes attr;
+    enum split split;
     int i, similar, map;
     int x, y;
 
@@ -97,7 +98,7 @@ ximage_open (int argc, char **argv)
     device->base.height = HeightOfScreen (scr);
     device_get_size (argc, argv, &device->base.width, &device->base.height);
     x = y = 0;
-    switch (device_get_split(argc, argv)) {
+    switch ((split = device_get_split(argc, argv))) {
     case SPLIT_NONE:
 	    break;
     case SPLIT_LEFT:
@@ -129,6 +130,16 @@ ximage_open (int argc, char **argv)
     case SPLIT_TOP_RIGHT:
 	    x = device->base.width /= 2;
 	    device->base.height /= 2;
+	    break;
+
+    case SPLIT_1_16...SPLIT_16_16:
+	    split -= SPLIT_1_16;
+	    x = split & 3;
+	    y = (split >> 2) & 3;
+	    device->base.width /= 4;
+	    device->base.height /= 4;
+	    x *= device->base.width;
+	    y *= device->base.height;
 	    break;
     }
 

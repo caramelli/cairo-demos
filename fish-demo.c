@@ -302,7 +302,7 @@ int main (int argc, char **argv)
 			fish_draw(device, cr, &fish[n], reflection, x1, x2, strip);
 		cairo_destroy(cr);
 
-		fps_finish(fb, device->name, version);
+		fps_finish(fb, device->name, version, "fish");
 		fb->show (fb);
 		fb->destroy (fb);
 		pause();

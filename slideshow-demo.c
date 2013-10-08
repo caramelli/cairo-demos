@@ -161,18 +161,27 @@ static void load_sources(const char *path,
 		load_sources_file(path, device, target);
 }
 
+static int done;
+static void signal_handler(int sig)
+{
+	done = sig;
+}
+
 int main(int argc, char **argv)
 {
 	struct device *device;
 	struct timeval start, last_tty, last_fps, now;
-	int frames, n;
-	int show_fps = 1;
+	int frame, n;
 	int transition = 1;
 	double divide = 1.;
 	const char *version;
+	int benchmark;
 
 	device = device_open(argc, argv);
 	version = device_show_version(argc, argv);
+	benchmark = device_get_benchmark(argc, argv);
+	if (benchmark == 0)
+		benchmark = 20;
 
 	g_type_init();
 
@@ -183,8 +192,6 @@ int main(int argc, char **argv)
 			prescale = 1;
 		} else if (strcmp (argv[n], "--no-preload") == 0) {
 			preload = 0;
-		} else if (strcmp (argv[n], "--hide-fps") == 0) {
-			show_fps = 0;
 		} else if (strcmp (argv[n], "--no-transition") == 0) {
 			transition = 0;
 		}
@@ -206,8 +213,10 @@ int main(int argc, char **argv)
 	if (num_sources == 0)
 		return 0;
 
+	signal(SIGHUP, signal_handler);
+
 	gettimeofday(&start, 0); now = last_tty = last_fps = start;
-	n = frames = 0;
+	n = frame = 0;
 	do {
 		struct framebuffer *fb = device->get_framebuffer (device);
 		struct source *left = &sources[n % num_sources];
@@ -251,26 +260,41 @@ int main(int argc, char **argv)
 			n++;
 
 		gettimeofday(&now, NULL);
-		if (show_fps) {
-			if (last_fps.tv_sec)
-				fps_draw(cr, device->name, version, &last_fps, &now);
-			last_fps = now;
+		if (benchmark < 0 && last_fps.tv_sec) {
+			cairo_reset_clip (cr);
+			fps_draw(cr, device->name, version, &last_fps, &now);
 		}
+		last_fps = now;
 
 		cairo_destroy(cr);
 
 		fb->show (fb);
 		fb->destroy (fb);
 
-		frames++;
-		delta = now.tv_sec - last_tty.tv_sec;
-		delta += (now.tv_usec - last_tty.tv_usec)*1e-6;
-		if (delta >  5) {
-			printf("%.2f fps\n", frames/delta);
-			last_tty = now;
-			frames = 0;
+		frame++;
+		if (benchmark > 0) {
+			delta = now.tv_sec - start.tv_sec;
+			delta += (now.tv_usec - start.tv_usec)*1e-6;
+			if (delta > benchmark) {
+				printf("fish: %.2f fps\n", frame / delta);
+				break;
+			}
 		}
-	} while (1);
+	} while (!done);
+
+	if (benchmark < 0) {
+		struct framebuffer *fb = device->get_framebuffer (device);
+		cairo_t *cr = cairo_create(fb->surface);
+
+		cairo_set_source_rgb(cr, 1, 1, 1);
+		cairo_paint(cr);
+		cairo_destroy(cr);
+
+		fps_finish(fb, device->name, version, "slideshow");
+		fb->show (fb);
+		fb->destroy (fb);
+		pause();
+	}
 
 	return 0;
 }

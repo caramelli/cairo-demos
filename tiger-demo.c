@@ -161,7 +161,7 @@ int main (int argc, char **argv)
 	if (benchmark < 0) {
 		struct framebuffer *fb = device->get_framebuffer (device);
 		tiger (device, fb, antialias, clip, 0.5, 0);
-		fps_finish(fb, device->name, version);
+		fps_finish(fb, device->name, version, "tiger");
 		fb->show (fb);
 		fb->destroy (fb);
 		pause();

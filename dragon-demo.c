@@ -255,7 +255,7 @@ int main (int argc, char **argv)
 		dragon(cr, device->width, device->height, iterations, stroke);
 		cairo_destroy(cr);
 
-		fps_finish(fb, device->name, version);
+		fps_finish(fb, device->name, version, "dragon");
 		fb->show (fb);
 		fb->destroy (fb);
 		pause();

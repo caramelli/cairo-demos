@@ -299,7 +299,7 @@ int main (int argc, char **argv)
 
 		cairo_destroy(cr);
 
-		fps_finish(fb, device->name, version);
+		fps_finish(fb, device->name, version, "gears");
 		fb->show (fb);
 		fb->destroy (fb);
 		pause ();

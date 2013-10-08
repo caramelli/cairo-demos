@@ -173,7 +173,7 @@ int main (int argc, char **argv)
 		pythagoras(cr, device->width, device->height, 2048);
 		cairo_destroy(cr);
 
-		fps_finish(fb, device->name, version);
+		fps_finish(fb, device->name, version, "pythagoras");
 		fb->show (fb);
 		fb->destroy (fb);
 		pause();

@@ -392,7 +392,7 @@ int main (int argc, char **argv)
 		show(cr, device->width, device->height, use_mask);
 		cairo_destroy(cr);
 
-		fps_finish(fb, device->name, version);
+		fps_finish(fb, device->name, version, "maze");
 		fb->show (fb);
 		fb->destroy (fb);
 		pause();

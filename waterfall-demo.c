@@ -199,7 +199,7 @@ int main (int argc, char **argv)
 		waterfall_draw(&waterfall, cr);
 		cairo_destroy(cr);
 
-		fps_finish(fb, waterfall.device->name, version);
+		fps_finish(fb, waterfall.device->name, version, "waterfall");
 		fb->show (fb);
 		fb->destroy (fb);
 		pause();
