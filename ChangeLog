@@ -1,24 +1,569 @@
-2005-06-15  Carl Worth  <cworth@cworth.org>
+commit d87bf114ee0711620c150d1fb9610e5ece033420
+Author: Chris Wilson <chris@chris-wilson.co.uk>
+Date:   Tue Oct 8 21:00:55 2013 +0100
 
-	* Makefile: Don't build gtkcairo_slide directory by default.
+    Split screen into 16 simultaneous benchmarks
 
-	* X11/cairo-demo-xcb.c: (win_draw):
-	* X11/cairo-demo.c: (win_draw):
-	* X11/cairo-spline.c: (win_refresh): Track replacement of
-	cairo_status_string by cairo_status_to_string.
+commit a1dd8cfca93a4e0aacd11cafb571f75fbc63e58a
+Author: Chris Wilson <chris@chris-wilson.co.uk>
+Date:   Sun Aug 25 17:36:21 2013 +0100
 
-2005-03-08  Steve Chaplin  <steve1097@yahoo.com.au>
+    Use SHM events for synchronisation when possible
 
-	* python/hangman.py, python/ChangeLog, python: remove, since
-	hangman.py has been copied over to pycairo/examples/gtk/
+commit 7b56133dd66b6e1924e6105c05790b207836d9c7
+Author: Chris Wilson <chris@chris-wilson.co.uk>
+Date:   Thu Mar 15 00:57:05 2012 +0000
 
-2005-02-21  Carl Worth  <cworth@cworth.org>
+    maze: Add --use-mask parameter
+    
+    Useful for inspecting how much overhead rendering each sprite has
+    every time versus rendering a pair of masks for once every frame.
 
-	* PS/Makefile:
-	* X11/Makefile:
-	* gtkcairo_slide/Makefile:
-	* png/Makefile: Try to be kinder for portability by not including
-	gcc-specific warning options in the Makefile. The options really
-	are handy, so we provide an example in the Makefile for how users
-	who want them can get at them.
+commit fce8136569861565eb5721d19aaced1b6e7d41f3
+Author: Chris Wilson <chris@chris-wilson.co.uk>
+Date:   Sun Jun 30 21:44:01 2013 +0100
 
+    Add a new demo similar to Bubbles!!!
+    
+    In the spirit of
+    http://ie.microsoft.com/testdrive/Performance/Bubbles/Default.html
+    this demo animates a number of sprites bouncing off the walls and each
+    other. When a pair of bubbles collide, part of the background is
+    revealed.
+    
+    The original Microsoft demo computes the blur on the CPU (presumably to
+    highlight a weakness in chrome and firefox), this demo instead performs
+    all pixel manipulation on the GPU.
+
+commit 581f4defb8d1ddfa6d59ecf78b9809729844cffb
+Author: Chris Wilson <chris@chris-wilson.co.uk>
+Date:   Fri Jan 25 11:16:46 2013 +0000
+
+    poppler: Prettier page animation
+
+commit 660c472452627379110b8a9249edd25951989d9d
+Author: Chris Wilson <chris@chris-wilson.co.uk>
+Date:   Sat Aug 18 09:24:48 2012 +0100
+
+    ximage: Provide double buffering for the similar image
+
+commit ad523d57f906def4b4841896739a8132cc7a3f06
+Author: Chris Wilson <chris@chris-wilson.co.uk>
+Date:   Sat Aug 18 08:27:04 2012 +0100
+
+    ximage: Add a couple of variations for means of presentation
+
+commit 2a2dbabd3c0fb88c497bdd63882a0aafc37d6585
+Author: Chris Wilson <chris@chris-wilson.co.uk>
+Date:   Fri Aug 17 22:24:03 2012 +0100
+
+    ximage: Remove stale includes
+
+commit df07499104d382b224c76638c3ff667727576cf2
+Author: Chris Wilson <chris@chris-wilson.co.uk>
+Date:   Fri Aug 17 22:20:18 2012 +0100
+
+    Rename ximage to xshm and create a new demo based on similar-image
+
+commit f935013e233d076acf24dfdb01d4eae60198882e
+Author: Chris Wilson <chris@chris-wilson.co.uk>
+Date:   Mon Aug 13 23:33:47 2012 +0100
+
+    Demonstrate use of cairo_surface_create_similar_image for fast pixel upload
+
+commit 1d7713a23464e439a70065512b8aa0a6ab130c5b
+Author: Chris Wilson <chris@chris-wilson.co.uk>
+Date:   Sun Aug 12 15:56:22 2012 +0100
+
+    Add a skia demo backend
+    
+    Note that this then requires us to be C++ clean.
+
+commit 67e72732b2f047f368d22c66a148fb1c28993a96
+Author: Chris Wilson <chris@chris-wilson.co.uk>
+Date:   Sun Aug 12 15:40:55 2012 +0100
+
+    fish: Optionally remove the background
+    
+    Drawing the reflected background hits a bottleneck in pixman, so add an
+    option not to draw it.
+
+commit 1744f89551f7240ab3c228e7c742e8da89eda017
+Author: Chris Wilson <chris@chris-wilson.co.uk>
+Date:   Sun Aug 12 15:36:48 2012 +0100
+
+    ximage: Remove the redundant clear
+
+commit 9c5dd77243e32857267d996a6827e87fe8308296
+Author: Zhigang Gong <zhigang.gong@linux.intel.com>
+Date:   Thu Aug 9 11:17:32 2012 +0100
+
+    Correct benchmark result messages
+
+commit 4eb212ed2b0585bd6a8ea579e6d187ff36e9fa04
+Author: Chris Wilson <chris@chris-wilson.co.uk>
+Date:   Fri Jul 20 14:55:30 2012 +0100
+
+    Compile fixes
+
+commit 0d4af324f42fd2d052b82643b4af25ba19c92bb2
+Author: Chris Wilson <chris@chris-wilson.co.uk>
+Date:   Sun Jul 15 10:44:27 2012 +0100
+
+    Add a 12000x12000 example image
+
+commit a5a8361b6748af55c77cf0ac140e2a331d2191d8
+Author: Chris Wilson <chris@chris-wilson.co.uk>
+Date:   Wed Mar 21 11:27:37 2012 +0000
+
+    A small step towards portability: wean off gdk-pixbuf-2.0
+    
+    Still lots of UNIXy code...
+
+commit 0b23fea3f624de79a2696d01875af53655835ec8
+Author: Chris Wilson <chris@chris-wilson.co.uk>
+Date:   Mon Mar 19 23:48:09 2012 +0000
+
+    gears: remove unused variable 'frames'
+
+commit e19230e6e9b91264801e7d989bc790ea5c04182f
+Author: Chris Wilson <chris@chris-wilson.co.uk>
+Date:   Thu Mar 15 14:19:10 2012 +0000
+
+    gears: Remove the periodic print of fps to the console
+
+commit 6cc830e38758c1c6b8add790f5ff56d80c540ca1
+Author: Chris Wilson <chris@chris-wilson.co.uk>
+Date:   Wed Mar 14 17:53:24 2012 +0000
+
+    Add a maze solving demo
+
+commit 2281be4c743694a4c8949bef97af27b136990544
+Author: Chris Wilson <chris@chris-wilson.co.uk>
+Date:   Fri Mar 9 01:50:31 2012 +0000
+
+    gradient: Use faster antialiasing modes
+    
+    Try to reduce the complexity of the drawing to emphasize the impact of
+    using the gradient.
+
+commit a7cbbc2a77a084a914860d54fd263269fe1026c3
+Author: Chris Wilson <chris@chris-wilson.co.uk>
+Date:   Thu Mar 8 20:10:04 2012 +0000
+
+    dragon: compare fills vs strokes
+
+commit 08cfbf30f7a40c3cac5a5c58367a74fd3590dad3
+Author: Chris Wilson <chris@chris-wilson.co.uk>
+Date:   Fri Mar 9 01:05:13 2012 +0000
+
+    xlib: use a queue depth of 2 frames
+
+commit 3779aefd369e09f8d1e371f9ebf8b7edf32695f4
+Author: Chris Wilson <chris@chris-wilson.co.uk>
+Date:   Thu Mar 8 16:43:43 2012 +0000
+
+    demo: Make the antialias hint options dependent upon cairo-1.11.4
+
+commit fba52a2db40b2e07563201ac99bb1032c55d7065
+Author: Chris Wilson <chris@chris-wilson.co.uk>
+Date:   Thu Mar 8 16:42:01 2012 +0000
+
+    demo: Move xlib over xcb in default backend priority
+
+commit ebbb9536574385dca288650126e4237fcc0c0905
+Author: Chris Wilson <chris@chris-wilson.co.uk>
+Date:   Tue Mar 6 22:14:42 2012 +0000
+
+    Add sierpinski fractal triangle, lots of thin strokes
+
+commit bd9a8579876667f458a5eed28a0ddba5aea335ff
+Author: Chris Wilson <chris@chris-wilson.co.uk>
+Date:   Mon Mar 5 16:32:45 2012 +0000
+
+    dragon: refine path construction to reduce demo overhead
+
+commit aeec291b08024c1b4ca0fca0458be7617a3f54bc
+Author: Chris Wilson <chris@chris-wilson.co.uk>
+Date:   Mon Mar 5 07:09:11 2012 +0000
+
+    Add wave-demo
+    
+    This is an interesting technique for generating an outline.
+
+commit f5a9228ba3a8ddb4d1f378aae8177ae68e6b024f
+Author: Chris Wilson <chris@chris-wilson.co.uk>
+Date:   Mon Mar 5 06:18:07 2012 +0000
+
+    Add pythagoras, a demonstration of many fills
+
+commit 82953b8438acfadf0e3566fc4d34cf617c295fc0
+Author: Chris Wilson <chris@chris-wilson.co.uk>
+Date:   Mon Mar 5 05:53:50 2012 +0000
+
+    Add dragon
+    
+    A demonstration of aligned-path stroking.
+
+commit fa7a3822d28c8e256f049999aa70d7d878ef2bb8
+Author: Chris Wilson <chris@chris-wilson.co.uk>
+Date:   Tue Feb 28 16:19:42 2012 +0000
+
+    spiral: Simplify to emphasize measurement of the line drawing speed.
+
+commit f7b1ceb7960579b1f9fe5ad4f8fa22a8e5d67cfc
+Author: Chris Wilson <chris@chris-wilson.co.uk>
+Date:   Tue Feb 28 14:55:07 2012 +0000
+
+    waterfall: Clamp the range of font-sizes
+    
+    Useful if you want to minimise the effect of glyph uploads and focus on
+    the rendering speed of precomputed glyphs.
+
+commit d4100c2d203af6e266c9051399001a8b9708d540
+Author: Chris Wilson <chris@chris-wilson.co.uk>
+Date:   Tue Feb 28 13:09:12 2012 +0000
+
+    Add a waterfall demo
+    
+    Repeatedly draw the same line of text at different sizes to stress glyph
+    creation as well as rendering.
+
+commit 345c359dad3e763c72d52df56a558271365b7de1
+Author: Chris Wilson <chris@chris-wilson.co.uk>
+Date:   Mon Feb 27 09:28:48 2012 +0000
+
+    chart: Add a vertical mode
+    
+    Since the tesselator is run in typically performed in scanline
+    orientation, a vertical trace should be faster than horizontal traces.
+
+commit f0b110e7d01c18588f06c79083d8e88c05806a84
+Author: Chris Wilson <chris@chris-wilson.co.uk>
+Date:   Fri Feb 10 13:51:06 2012 +0000
+
+    spinner: Restrict to showing a single file
+    
+    Show a slideshow as well as spinning was just too confusing and
+    needlessly complicating the benchmark.
+
+commit e45b6f2de854fb34a1d6dfe31721cdd889f49b29
+Author: Chris Wilson <chris@chris-wilson.co.uk>
+Date:   Sun Feb 5 11:28:09 2012 +0000
+
+    spinner: compile fix, complete the transition for benchmarking
+
+commit 2512484dcfb765efb754e58ec0476bf8025f0a77
+Author: Chris Wilson <chris@chris-wilson.co.uk>
+Date:   Sat Feb 4 13:16:02 2012 +0000
+
+    Add a zoom effect to the spinner-demo
+    
+    To demonstrate handling of very large images by zooming in.
+
+commit cf419baa3bad78d98234113bf1910e56724c4038
+Author: Chris Wilson <chris@chris-wilson.co.uk>
+Date:   Thu Feb 2 11:33:08 2012 +0000
+
+    Add a split-screen mode for showing backend performance side-by-side
+    
+    And other amenities for demonstrating performance difference between
+    backends simultaneously in a visual fashion.
+
+commit 893b62c9f246b2062cef6e83fe904ff928c87050
+Author: Chris Wilson <chris@chris-wilson.co.uk>
+Date:   Mon Jan 30 10:06:04 2012 +0000
+
+    Prelude to benchmarking
+
+commit fa1322357a8c42f2d43ba2e14c9a4aec1b1a46c6
+Author: Chris Wilson <chris@chris-wilson.co.uk>
+Date:   Fri Nov 25 12:59:10 2011 +0000
+
+    gears: Demonstrate sprite caching
+
+commit 4cd3d90f69c31d6c85e56af5ea4504d3f59ee8b8
+Author: Chris Wilson <chris@chris-wilson.co.uk>
+Date:   Thu Nov 24 16:44:52 2011 +0000
+
+    xlib: Tweak synchronisation
+    
+    Dispose of the old workaround!
+
+commit 93f1fa93cefeb028696ec5adbbdf8463723cb187
+Author: Chris Wilson <chris@chris-wilson.co.uk>
+Date:   Fri Oct 14 13:46:48 2011 +0100
+
+    fish: reset clip to display fps
+
+commit 3f3816b4c489231c463eec2d6d32fd07d1131701
+Author: Chris Wilson <chris@chris-wilson.co.uk>
+Date:   Thu Oct 13 23:09:39 2011 +0100
+
+    Add some rudimentary clipping variations
+
+commit 50b60ba15c3c7702ab4c38b7df1b3d0be3f331f3
+Author: Chris Wilson <chris@chris-wilson.co.uk>
+Date:   Wed Oct 12 21:24:08 2011 +0100
+
+    xcb: Avoid the per-frame surface allocation and clear
+    
+    Similar to xlib
+
+commit 00428d8557dfcdeafd813c04acd282356047a161
+Author: Chris Wilson <chris@chris-wilson.co.uk>
+Date:   Tue Oct 11 16:26:03 2011 +0100
+
+    flowers: tweak rendering of petals
+
+commit 37bb9b427eb387a4a493573176f26536457fcb8c
+Author: Chris Wilson <chris@chris-wilson.co.uk>
+Date:   Mon Oct 10 12:13:51 2011 +0100
+
+    fish: Fix the position of and make the reflection more pronounced
+
+commit ef9f9edac105d7b1b195a1e5177030a3e9212c0a
+Author: Chris Wilson <chris@chris-wilson.co.uk>
+Date:   Sun Oct 9 19:50:38 2011 +0100
+
+    Makefile: fix detection of cogl
+
+commit d9116a26619f3b921a0075f4bf82e7397f8595a5
+Author: Chris Wilson <chris@chris-wilson.co.uk>
+Date:   Sun Oct 9 03:43:09 2011 +0100
+
+    gears: And remove the vestigial bits of the old linear gradient animation
+
+commit 47a065a6502ca0cb6318f592a66ba5081a80c8c2
+Author: Chris Wilson <chris@chris-wilson.co.uk>
+Date:   Sat Oct 8 14:56:34 2011 +0100
+
+    slideshow: remove redundant code
+
+commit 5de4035acd3fa540118bd06e309bb8871c43680f
+Author: Chris Wilson <chris@chris-wilson.co.uk>
+Date:   Sat Oct 8 14:50:32 2011 +0100
+
+    Consolidate all fps_draw() routines into one
+
+commit fbaeadf8899b63c46ef58c2a0814046139dc1d4c
+Author: Chris Wilson <chris@chris-wilson.co.uk>
+Date:   Sat Oct 8 13:58:07 2011 +0100
+
+    chart: Add an option to hide the fps
+
+commit 690285f8cee6ec056c00602e83617318d4c802f3
+Author: Chris Wilson <chris@chris-wilson.co.uk>
+Date:   Sat Oct 8 13:51:32 2011 +0100
+
+    slideshow: Add a sliding transition effect
+
+commit b02eb4de59234a675c6a6c8675b4dbf719c85f2d
+Author: Chris Wilson <chris@chris-wilson.co.uk>
+Date:   Sat Oct 8 13:49:16 2011 +0100
+
+    spiral: Add fade option to disable radial mask
+    
+    And also fade out the images themselves.
+
+commit 851346edc0a5f1b463ff61c3f679f29d692a3b81
+Author: Chris Wilson <chris@chris-wilson.co.uk>
+Date:   Sat Oct 8 06:15:41 2011 +0100
+
+    Separate out the linear gradient test from gears
+
+commit 63077d55dfd88486a3aaf4b66df374974dad8992
+Author: Chris Wilson <chris@chris-wilson.co.uk>
+Date:   Sat Oct 8 05:49:56 2011 +0100
+
+    chart: Add antialias option
+
+commit a39020fd9b1baafe896b9c5d82e0e0ee25d9cf04
+Author: Chris Wilson <chris@chris-wilson.co.uk>
+Date:   Sat Oct 8 05:15:27 2011 +0100
+
+    flowers: Add an opaque option to disable the transparency group
+
+commit 4d7b847ca66eeec39cb246225e1a29190e1ccfef
+Author: Chris Wilson <chris@chris-wilson.co.uk>
+Date:   Sat Oct 8 04:19:24 2011 +0100
+
+    fish: Add a reflection effect using a linear gradient
+
+commit abb4aa628f7266c10fa0b9197cdd791772e8cc17
+Author: Chris Wilson <chris@chris-wilson.co.uk>
+Date:   Thu Oct 6 14:35:44 2011 +0100
+
+    Integrate with cairo-cogl
+
+commit 6e4c22ec0e43e95e67df2ac3fde704a36cd4dcb2
+Author: Chris Wilson <chris@chris-wilson.co.uk>
+Date:   Fri Sep 30 23:58:26 2011 +0100
+
+    chart: align the background grid correctly to the pixels
+
+commit 81a0eace1f3c2b3cd2d38342b626c74a7dac7c6a
+Author: Chris Wilson <chris@chris-wilson.co.uk>
+Date:   Fri Sep 30 17:37:24 2011 +0100
+
+    Add the flowers-demo from ages ago.
+
+commit e86d591c0ff27cd5c601498f2d6185ac0f9fd538
+Author: Chris Wilson <chris@chris-wilson.co.uk>
+Date:   Fri Sep 30 13:58:40 2011 +0100
+
+    fish-demo: don't prescale the background
+
+commit 0339f3be256de0411d158b5d9960d81567c7598b
+Author: Chris Wilson <chris@chris-wilson.co.uk>
+Date:   Thu Sep 29 23:44:39 2011 +0100
+
+    Add an example of an animating chart
+
+commit c1ce8377d31e1e434f091df89ef25128d496fe86
+Author: Chris Wilson <chris@chris-wilson.co.uk>
+Date:   Thu Sep 29 22:13:31 2011 +0100
+
+    Add the "classic" cairogears demo
+
+commit 23eba4d98e231c6af7ed5a4a769b82a72ebad942
+Author: Chris Wilson <chris@chris-wilson.co.uk>
+Date:   Thu Sep 29 18:13:16 2011 +0100
+
+    Add a fish-demo
+
+commit 20afbc28d33d987cea6520dc005ecd2e6cebe2b1
+Author: Chris Wilson <chris@chris-wilson.co.uk>
+Date:   Thu Sep 29 17:31:49 2011 +0100
+
+    xcb: Synchronize rendering
+
+commit 108bf1b9079b9579cccf0233d7d2168aeb501241
+Author: Chris Wilson <chris@chris-wilson.co.uk>
+Date:   Sun Sep 11 19:06:36 2011 +0100
+
+    tiger: switchable antialiasing quality
+
+commit f186880d3d4332fadb2c14bab3ea50defee7c155
+Author: Chris Wilson <chris@chris-wilson.co.uk>
+Date:   Fri Sep 9 21:46:42 2011 +0100
+
+    And example benchmarking mode for the tiger
+
+commit 52607ee81edf62971567676898967450fe265c53
+Author: Chris Wilson <chris@chris-wilson.co.uk>
+Date:   Fri Sep 9 21:31:18 2011 +0100
+
+    device: limit window size
+
+commit 493306aa80717ddd969fb1210fa3daa272f8695b
+Author: Chris Wilson <chris@chris-wilson.co.uk>
+Date:   Fri Sep 9 21:09:10 2011 +0100
+
+    gitignore: add tiger-demo
+
+commit 4d83db009f62e8c169272ea3e7ca67b17aa98c55
+Author: Chris Wilson <chris@chris-wilson.co.uk>
+Date:   Fri Sep 9 21:08:51 2011 +0100
+
+    spiral: Include a radial gradient for the path
+
+commit a8c2b16286535a77c084c55e0143d3ed893e1b45
+Author: Øyvind Kolås <pippin@gimp.org>
+Date:   Wed Aug 31 19:24:35 2011 +0100
+
+    Add a spinning PostScript tiger demo
+
+commit a1817afb5c54dda345d61b069584d87f59db53be
+Author: Chris Wilson <chris@chris-wilson.co.uk>
+Date:   Sun Jul 3 18:19:51 2011 +0100
+
+    demos: Switch to OVER in order to blend the text
+
+commit 9e02d1f237d1f43f1c73fb0cc6b450b312f693cb
+Author: Chris Wilson <chris@chris-wilson.co.uk>
+Date:   Sun Jul 3 18:19:24 2011 +0100
+
+    xlib: Use GetImage to synchronize each frame for accurate timing
+
+commit e56eb7807895c00e5d73f6d03121300b19babdf5
+Author: Chris Wilson <chris@chris-wilson.co.uk>
+Date:   Sat Jul 2 16:49:45 2011 +0100
+
+    Add a spinner-demo, a variation on both the slideshow and spiral
+
+commit 7ed2adcefe7fa00a93844b05c7de1d32390cd4e7
+Author: Chris Wilson <chris@chris-wilson.co.uk>
+Date:   Sat Jul 2 13:53:10 2011 +0100
+
+    Share the common gdk-pixbuf to cairo_image_surface routine
+
+commit cf2ac2375f1c2a2dccbd0acbea816372e04c4101
+Author: Chris Wilson <chris@chris-wilson.co.uk>
+Date:   Sat Jul 2 13:49:20 2011 +0100
+
+    Add slideshow-demo
+    
+    Primarily to showcase a bug in gen2/gen3 hw...
+
+commit d423475f1612e87ee4f2a2f3bc084df0f08a209a
+Author: Chris Wilson <chris@chris-wilson.co.uk>
+Date:   Sat Jul 2 00:36:51 2011 +0100
+
+    spiral: Allow loading of individual images
+
+commit fc4b8b0148bc544bbbe90ef131cdc750aaed5188
+Author: Chris Wilson <chris@chris-wilson.co.uk>
+Date:   Fri Jul 1 12:26:46 2011 +0100
+
+    spiral: delay showing fps to remove spurious first value
+
+commit 101e633897e3c28789839446141a5f48a65abb76
+Author: Chris Wilson <chris@chris-wilson.co.uk>
+Date:   Fri Jul 1 12:22:30 2011 +0100
+
+    spiral: Add option to hide the images
+
+commit a40022351e1d8952ca78050727ac9aca5488b545
+Author: Chris Wilson <chris@chris-wilson.co.uk>
+Date:   Fri Jul 1 09:51:06 2011 +0100
+
+    spiral: Print out only the number of images loaded from this directory
+    
+    ... slightly less confusing.
+
+commit 176aa19299af57b7951c01cee5700af8699eb0d3
+Author: Chris Wilson <chris@chris-wilson.co.uk>
+Date:   Wed Jun 29 13:07:39 2011 +0100
+
+    spiral: Overlay the fps
+
+commit d4b542978c86d65d47d143b76518ecf6c19bb09f
+Author: Chris Wilson <chris@chris-wilson.co.uk>
+Date:   Wed Jun 29 12:36:12 2011 +0100
+
+    Autoinclude poppler based on presence of poppler-glib
+
+commit 55a6fd7cb96329aca6848c69286c6eff686b8eb1
+Author: Chris Wilson <chris@chris-wilson.co.uk>
+Date:   Wed Jun 29 09:07:46 2011 +0100
+
+    Add a .gitignore
+
+commit 47c369daee273bf8037908497f28da83ea91ed70
+Author: Chris Wilson <chris@chris-wilson.co.uk>
+Date:   Wed Jun 29 09:07:14 2011 +0100
+
+    Move the common device open into its own routine.
+
+commit 48302f94bdb5caaf7b366d5e95461154b8def2d1
+Author: Chris Wilson <chris@chris-wilson.co.uk>
+Date:   Tue Jun 28 19:58:41 2011 +0100
+
+    A simple demonstration of the ability of various backends
+
+commit d9e3681422082cc6604dacf1f3b7c776cf574f66
+Author: Nicolas Caramelli <caramelli.devel@gmail.com>
+Date:   Wed May 11 11:11:11 2011 +0200
+
+    Initial import of the old cairo-demo repository
