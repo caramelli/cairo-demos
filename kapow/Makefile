@@ -1,5 +1,5 @@
-MYCFLAGS= $(shell pkg-config --cflags cairo libpng) -Wall -g -Wpointer-arith -Wstrict-prototypes -Wmissing-prototypes -Wmissing-declarations -Wnested-externs -fno-strict-aliasing
-LDLIBS	= $(shell pkg-config --libs cairo libpng) -g
+MYCFLAGS= $(shell pkg-config --cflags cairo) -Wall -g -Wpointer-arith -Wstrict-prototypes -Wmissing-prototypes -Wmissing-declarations -Wnested-externs -fno-strict-aliasing
+LDLIBS	= $(shell pkg-config --libs cairo) -lm
 
 all: kapow
 
@@ -9,4 +9,4 @@ all: kapow
 kapow : kapow.o
 
 clean :
-	rm kapow.o kapow
+	rm -f kapow *.o *.png
