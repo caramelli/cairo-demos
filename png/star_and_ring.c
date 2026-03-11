@@ -24,7 +24,6 @@
  */
 
 #include <cairo.h>
-#include <math.h>
 
 #define WIDTH 600
 #define HEIGHT 600

@@ -41,7 +41,13 @@
  */
 
 #include <cairo.h>
-#include <math.h>
+
+static int
+fast_floor (double x)
+{
+    int i = (int) x;
+    return i - (i > x);
+}
 
 #define WIDTH 175
 #define HEIGHT 175
@@ -62,8 +68,8 @@ snap_point_for_fill (cairo_t *cr, double *x, double *y)
 {
     /* Convert to device space, round, then convert back to user space. */
     cairo_user_to_device (cr, x, y);
-    *x = floor (*x + 0.5);
-    *y = floor (*y + 0.5);
+    *x = fast_floor (*x + 0.5);
+    *y = fast_floor (*y + 0.5);
     cairo_device_to_user (cr, x, y);
 }
 
@@ -98,8 +104,8 @@ snap_point_for_stroke (cairo_t *cr, double *x, double *y)
     y_offset = y_width_dev_2 - (int) (y_width_dev_2);
 
     cairo_user_to_device (cr, x, y);
-    *x = floor (*x + x_offset + 0.5);
-    *y = floor (*y + y_offset + 0.5);
+    *x = fast_floor (*x + x_offset + 0.5);
+    *y = fast_floor (*y + y_offset + 0.5);
     *x -= x_offset;
     *y -= y_offset;
     cairo_device_to_user (cr, x, y);
@@ -125,7 +131,7 @@ snap_line_width (cairo_t *cr)
     /* If the line width is less than 1 then it will round to 0 and
      * disappear. Instead, we clamp it to 1.0, but we must preserve
      * its sign for the case of a reflecting transformation. */
-    x_width_snapped = floor (x_width + 0.5);
+    x_width_snapped = fast_floor (x_width + 0.5);
     if (fabs(x_width_snapped) < 1.0) {
 	if (x_width > 0)
 	    x_width_snapped = 1.0;
@@ -133,7 +139,7 @@ snap_line_width (cairo_t *cr)
 	    x_width_snapped = -1.0;
     }
 
-    y_width_snapped = floor (y_width + 0.5);
+    y_width_snapped = fast_floor (y_width + 0.5);
     if (fabs(y_width_snapped) < 1.0) {
 	if (y_width > 0)
 	    y_width_snapped = 1.0;

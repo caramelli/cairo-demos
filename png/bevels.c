@@ -52,8 +52,10 @@
  */
 
 #include <cairo.h>
-#include <math.h>
 #include <stdint.h>
+
+#define M_PI   3.14159265358979323846
+#define M_PI_4 0.78539816339744830962
 
 #define WIDTH 100
 #define HEIGHT 70

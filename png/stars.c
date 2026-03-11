@@ -26,7 +26,8 @@
  */
 
 #include <cairo.h>
-#include <math.h>
+
+#define M_PI 3.14159265358979323846
 
 void
 draw_stars (cairo_t *cr, int width, int height);

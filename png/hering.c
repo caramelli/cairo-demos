@@ -26,7 +26,8 @@
  */
 
 #include <cairo.h>
-#include <math.h>
+
+#define M_PI_2 1.57079632679489661923
 
 void
 draw_hering (cairo_t *cr, int width, int height);
