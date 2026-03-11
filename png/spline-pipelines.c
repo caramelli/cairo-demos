@@ -1,5 +1,4 @@
-/* cc `pkg-config --cflags --libs cairo libpng12` spline-pipelines.c -o spline-pipelines
- *
+/*
  * Copyright © 2006 Red Hat, Inc.
  *
  * Permission to use, copy, modify, distribute, and sell this software

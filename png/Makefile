@@ -1,4 +1,4 @@
-EXAMPLES=bevels caps_joins hering outline spiral splines_tolerance snapping stars star_and_ring text text-rotate
+EXAMPLES=bevels caps_joins hering outline spiral spline-pipelines splines_tolerance snapping stars star_and_ring text text-rotate
 
 # I'd like to put a bunch of compiler-specific warning flags here, but
 # I don't know a good way to choose the right flags based on the
@@ -9,13 +9,10 @@ EXAMPLES=bevels caps_joins hering outline spiral splines_tolerance snapping star
 #
 # CFLAGS="-Wall -Wpointer-arith -Wstrict-prototypes -Wmissing-prototypes -Wmissing-declarations -Wnested-externs -fno-strict-aliasing" make
 
-MYCFLAGS=`pkg-config --cflags cairo libpng12`
-MYLDFLAGS=`pkg-config --libs cairo libpng12`
+MYCFLAGS=`pkg-config --cflags cairo`
+MYLDFLAGS=`pkg-config --libs cairo`
 
 all: $(EXAMPLES)
-
-%.o: %.c
-	$(CC) -c $(CFLAGS) $(CPPFLAGS) ${MYCFLAGS} $< -o $@
 
 %: %.c
 	$(CC) $(CFLAGS) $(CPPFLAGS) ${MYCFLAGS} ${MYLDFLAGS} $^ -o $@
